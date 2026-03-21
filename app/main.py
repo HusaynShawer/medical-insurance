@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from app.database import create_all_tables, close_db
 from app.routers import booking_route, Doctors, customer,slots
-
+from app.routers import appointments
+from app.routers import admin
+from app.routers import chat
 app = FastAPI(
     title="Smart Insurance Medical Booking",
     version="1.0.0",
@@ -25,6 +27,9 @@ app.include_router(booking_route.router)
 app.include_router(Doctors.router)
 app.include_router(customer.router)
 app.include_router(slots.router)
+app.include_router(appointments.router)
+app.include_router(admin.router)
+app.include_router(chat.router)
 # =============================================
 # Health Check
 # =============================================
