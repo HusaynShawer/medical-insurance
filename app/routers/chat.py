@@ -1,24 +1,16 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
-from typing import Literal
+from typing import Literal, Optional
 from app.database import get_session
 from app.agent.agent import run_agent
 import uuid
-
+from app.schemas.chat import ChatRequest, ChatResponse
 router = APIRouter(prefix="/chat", tags=["Chat Agent"])
 
 sessions: dict = {}
 
-class ChatRequest(BaseModel):
-    message: str
-    session_id: str = None
-    provider: Literal["claude", "gemini"] = "claude"
 
-class ChatResponse(BaseModel):
-    reply: str
-    session_id: str
-    provider: str
 
 @router.post("/", response_model=ChatResponse)
 async def chat(
@@ -32,7 +24,6 @@ async def chat(
         message=body.message,
         history=history,
         session=session,
-        provider=body.provider,
     )
 
     sessions[session_id] = updated_history
@@ -40,7 +31,7 @@ async def chat(
     return {
         "reply": reply,
         "session_id": session_id,
-        "provider": body.provider,
+        "provider": "gemini",
     }
 
 @router.delete("/{session_id}")

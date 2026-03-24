@@ -4,7 +4,7 @@ import anthropic
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.agent.functions import TOOL_EXECUTORS
 
-client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+#client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 SYSTEM_PROMPT = """أنت مساعد حجز طبي ذكي لنظام تأمين صحي.
 مهمتك مساعدة العملاء في حجز مواعيد مع الأطباء بطريقة ودية واحترافية.
@@ -66,47 +66,47 @@ TOOLS = [
 ]
 
 
-async def run_claude_agent(
-    message: str,
-    history: list,
-    session: AsyncSession,
-) -> tuple[str, list]:
+# async def run_claude_agent(
+#     message: str,
+#     history: list,
+#     session: AsyncSession,
+# ) -> tuple[str, list]:
 
-    history = history + [{"role": "user", "content": message}]
+#     history = history + [{"role": "user", "content": message}]
 
-    while True:
-        response = await client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=1024,
-            system=SYSTEM_PROMPT,
-            tools=TOOLS,
-            messages=history,
-        )
+#     while True:
+#         response = await client.messages.create(
+#             model="claude-haiku-4-5-20251001",
+#             max_tokens=1024,
+#             system=SYSTEM_PROMPT,
+#             tools=TOOLS,
+#             messages=history,
+#         )
 
-        history = history + [{"role": "assistant", "content": response.content}]
+#         history = history + [{"role": "assistant", "content": response.content}]
 
-        if response.stop_reason != "tool_use":
-            reply = next(
-                (b.text for b in response.content if hasattr(b, "text")), ""
-            )
-            return reply, history
+#         if response.stop_reason != "tool_use":
+#             reply = next(
+#                 (b.text for b in response.content if hasattr(b, "text")), ""
+#             )
+#             return reply, history
 
-        tool_results = []
-        for block in response.content:
-            if block.type != "tool_use":
-                continue
-            executor = TOOL_EXECUTORS.get(block.name)
-            if not executor:
-                result = {"error": f"Tool {block.name} not found"}
-            elif "session" in inspect.signature(executor).parameters:
-                result = await executor(**block.input, session=session)
-            else:
-                result = await executor(**block.input)
+#         tool_results = []
+#         for block in response.content:
+#             if block.type != "tool_use":
+#                 continue
+#             executor = TOOL_EXECUTORS.get(block.name)
+#             if not executor:
+#                 result = {"error": f"Tool {block.name} not found"}
+#             elif "session" in inspect.signature(executor).parameters:
+#                 result = await executor(**block.input, session=session)
+#             else:
+#                 result = await executor(**block.input)
 
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": block.id,
-                "content": str(result),
-            })
+#             tool_results.append({
+#                 "type": "tool_result",
+#                 "tool_use_id": block.id,
+#                 "content": str(result),
+#             })
 
-        history = history + [{"role": "user", "content": tool_results}]
+#         history = history + [{"role": "user", "content": tool_results}]

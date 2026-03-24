@@ -21,12 +21,12 @@ async def update_appointment_status(
     appointment = result.scalar_one_or_none()
 
     if not appointment:
-        raise ValueError(f"❌ الحجز رقم {appointment_id} غير موجود")
+        raise ValueError(f" الحجز رقم {appointment_id} غير موجود")
 
     allowed = VALID_TRANSITIONS.get(appointment.status, [])
     if new_status not in allowed:
         raise ValueError(
-            f"❌ لا يمكن تغيير الحالة من '{appointment.status}' إلى '{new_status}'. "
+            f" لا يمكن تغيير الحالة من '{appointment.status}' إلى '{new_status}'. "
             f"الحالات المسموحة: {allowed or ['لا يوجد — حالة نهائية']}"
         )
 
@@ -60,7 +60,7 @@ async def get_appointment(
     appointment = result.scalar_one_or_none()
 
     if not appointment:
-        raise ValueError(f"❌ الحجز رقم {appointment_id} غير موجود")
+        raise ValueError(f" الحجز رقم {appointment_id} غير موجود")
 
     return appointment
 

@@ -5,26 +5,9 @@ from pydantic import BaseModel
 from datetime import date, time
 from app.database import get_session
 from app.models import Doctor, DoctorSlot
-
+from app.schemas.admin import SlotCreate, SlotOut
 router = APIRouter(prefix="/slots", tags=["Slots"])
 
-
-# =============================================
-# Schemas
-# =============================================
-class SlotOut(BaseModel):
-    id:         int
-    slot_date:  date
-    slot_time:  time
-
-    class Config:
-        from_attributes = True
-
-class DoctorSlotsResponse(BaseModel):
-    doctor_id:       int
-    doctor_name:     str
-    specialization:  str
-    available_slots: list[SlotOut]
 
 
 # =============================================
@@ -42,7 +25,7 @@ async def get_available_slots(
     doctor = result.scalar_one_or_none()
 
     if not doctor:
-        raise HTTPException(status_code=404, detail="❌ الدكتور غير موجود")
+        raise HTTPException(status_code=404, detail=" الدكتور غير موجود")
 
     # جيب الـ slots المتاحة من النهارده للأمام
     today = date.today()
@@ -60,7 +43,7 @@ async def get_available_slots(
     if not slots:
         raise HTTPException(
             status_code=404,
-            detail=f"❌ لا توجد مواعيد متاحة للدكتور {doctor.name}"
+            detail=f" لا توجد مواعيد متاحة للدكتور {doctor.name}"
         )
 
     return {

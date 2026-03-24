@@ -5,29 +5,16 @@ from pydantic import BaseModel
 from datetime import date, time
 from app.database import get_session
 from app.models import Doctor, DoctorSlot
+from app.schemas.admin import SlotCreate, SlotOut
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
-
-
-class SlotCreate(BaseModel):
-    slot_date: date
-    slot_time: time
-
-
-class SlotOut(BaseModel):
-    id:           int
-    slot_date:    date
-    slot_time:    time
-    is_available: bool
-
-    class Config:
-        from_attributes = True
-
 
 # =============================================
 # POST /admin/doctors/{doctor_id}/slots
 # الدكتور يضيف ميعاد جديد
 # =============================================
+
+
 @router.post("/doctors/{doctor_id}/slots", status_code=201)
 async def add_slot(
     doctor_id: int,

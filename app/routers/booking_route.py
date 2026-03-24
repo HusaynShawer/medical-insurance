@@ -13,9 +13,6 @@ from app.schemas.booking import (
 
 router = APIRouter(prefix="/booking", tags=["Booking"])
 
-
-
-
 # =============================================
 # Step 1: POST /booking/search
 # =============================================
