@@ -1,6 +1,10 @@
 from pydantic import BaseModel, field_validator, model_validator
 from datetime import date, time
 
+# =============================================
+# Schemas
+# =============================================
+
 class SlotOut(BaseModel):
     id:         int
     slot_date:  date

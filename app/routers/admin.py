@@ -6,7 +6,6 @@ from datetime import date, time
 from app.database import get_session
 from app.models import Doctor, DoctorSlot
 from app.schemas.admin import SlotCreate, SlotOut
-
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 # =============================================
