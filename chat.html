@@ -1,125 +1,601 @@
-<!-- import React, { useState } from 'react';
-import { MessageSquare, Stethoscope, Calendar, User, Send } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام حجز المواعيد الطبية - المساعد الذكي</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-const MedicalBookingUI = () => {
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'أهلاً بك في نظام التأمين الذكي. كيف يمكنني مساعدتك اليوم؟' }
-  ]);
-  const [input, setInput] = useState('');
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
 
-  const handleSendMessage = async () => {
-    if (!input.trim()) return;
-    
-    // Add user message to UI
-    const newMessages = [...messages, { role: 'user', content: input }];
-    setMessages(newMessages);
-    setInput('');
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-    // Logic to call your FastAPI /chat/ endpoint would go here
-  };
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
 
-  return (
-    <div className="flex h-screen bg-gray-50 font-sans text-right" dir="rtl">
-      {/* Sidebar - Navigation */}
-      <div className="w-64 bg-blue-900 text-white flex flex-col p-4">
-        <h1 className="text-xl font-bold mb-8 flex items-center gap-2">
-          <Stethoscope /> تأمينك الذكي
-        </h1>
-        <nav className="space-y-4">
-          <button className="flex items-center gap-3 w-full p-2 bg-blue-800 rounded">
-            <MessageSquare size={20} /> مساعد الحجز
-          </button>
-          <button className="flex items-center gap-3 w-full p-2 hover:bg-blue-800 rounded">
-            <Calendar size={20} /> مواعيدي
-          </button>
-          <button className="flex items-center gap-3 w-full p-2 hover:bg-blue-800 rounded">
-            <User size={20} /> الملف الشخصي
-          </button>
-        </nav>
-      </div>
+        .chat-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="h-16 bg-white border-b flex items-center px-8 justify-between">
-          <div className="text-gray-600">نظام حجز المواعيد الطبية</div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-blue-900">حسين</span>
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-900">H</div>
-          </div>
-        </header>
+        .chat-header p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
 
-        {/* Dashboard Grid */}
-        <div className="flex-1 p-6 grid grid-cols-12 gap-6 overflow-hidden">
-          
-          {/* AI Chat Section - Matches your chat.py logic */}
-          <div className="col-span-4 bg-white rounded-xl shadow-sm border flex flex-col overflow-hidden">
-            <div className="p-4 bg-blue-50 border-b font-bold text-blue-900">
-              المساعد الطبي الذكي
+        .status {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .message.assistant .message-avatar {
+            background: #e2e8f0;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #1e293b;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            margin-top: 5px;
+            opacity: 0.7;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 18px;
+            width: fit-content;
+            border-bottom-right-radius: 4px;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #94a3b8;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper textarea {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 24px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: none;
+            max-height: 100px;
+            transition: border-color 0.3s;
+        }
+
+        .input-wrapper textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .session-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .clear-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .clear-btn:hover {
+            background: #fee2e2;
+        }
+
+        .session-id {
+            font-family: monospace;
+            font-size: 0.7rem;
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .doctor-card {
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 12px;
+            margin: 8px 0;
+            border-right: 4px solid #667eea;
+        }
+
+        .slot-card {
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 5px 0;
+            display: inline-block;
+        }
+
+        @media (max-width: 600px) {
+            .chat-container {
+                height: 95vh;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .chat-header h1 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">جاري الاتصال...</span>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                  <div className={`max-w-[80%] p-3 rounded-lg ${
-                    msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="p-4 border-t flex gap-2">
-              <input 
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                className="flex-1 border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="صف أعراضك هنا..."
-              />
-              <button onClick={handleSendMessage} className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">
-                <Send size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Search & Booking Results - Matches your booking_service.py logic */}
-          <div className="col-span-8 space-y-6 overflow-y-auto">
-            <div className="bg-white p-6 rounded-xl shadow-sm border">
-              <h2 className="text-lg font-bold mb-4">ابحث عن طبيب مباشرة</h2>
-              <div className="flex gap-4">
-                <input className="flex-1 border rounded-lg px-4 py-2" placeholder="الرقم القومي" />
-                <input className="flex-1 border rounded-lg px-4 py-2" placeholder="العرض الطبي (مثلاً: صداع)" />
-                <button className="bg-blue-900 text-white px-6 py-2 rounded-lg font-medium">بحث</button>
-              </div>
-            </div>
-
-            {/* Doctor Card Component */}
-            <div className="grid grid-cols-2 gap-4">
-              {[1, 2].map((d) => (
-                <div key={d} className="bg-white p-4 rounded-xl shadow-sm border hover:border-blue-500 transition-colors">
-                  <div className="flex gap-4 items-start">
-                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
-                      <User size={32} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg text-gray-900">د. أحمد محمد</h3>
-                      <p className="text-blue-600 text-sm font-medium">أخصائي مخ وأعصاب</p>
-                      <p className="text-gray-500 text-xs">القاهرة - شبكة تأمين (بلاتينيوم)</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t">
-                    <button className="w-full py-2 bg-green-50 text-green-700 rounded-lg font-bold text-sm hover:bg-green-100">
-                      عرض المواعيد المتاحة
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
+            <h1>🏥 المساعد الطبي الذكي</h1>
+            <p>نظام حجز المواعيد مع الأطباء - مدعوم بالذكاء الاصطناعي</p>
         </div>
-      </div>
-    </div>
-  );
-};
 
-export default MedicalBookingUI; -->
+        <div class="chat-messages" id="chatMessages">
+            <div class="message assistant">
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    أهلاً بك في نظام حجز المواعيد الطبية! 👋<br>
+                    أنا مساعدك الذكي لحجز المواعيد مع الأطباء.<br><br>
+                    <strong>كيف يمكنني مساعدتك اليوم؟</strong><br>
+                    • لحجز موعد جديد<br>
+                    • للاستفسار عن موعد موجود<br>
+                    • لإلغاء حجز
+                    <div class="message-time">الآن</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="input-wrapper">
+                <textarea 
+                    id="messageInput" 
+                    placeholder="اكتب رسالتك هنا..." 
+                    rows="1"
+                    maxlength="1000"
+                ></textarea>
+                <button class="send-btn" id="sendBtn">📤</button>
+            </div>
+            <div class="session-controls">
+                <button class="clear-btn" id="clearSessionBtn">
+                    🗑️ مسح المحادثة
+                </button>
+                <div class="session-id" id="sessionId">جاري التحميل...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ✅ API URL - مضبوط لـ localhost:8000
+        const API_URL = 'http://localhost:8000/chat';
+        
+        let sessionId = localStorage.getItem('chatSessionId') || null;
+        let isTyping = false;
+
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const clearSessionBtn = document.getElementById('clearSessionBtn');
+        const sessionIdSpan = document.getElementById('sessionId');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+
+        // Check connection to API
+        async function checkConnection() {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(API_URL, {
+                    method: 'OPTIONS',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                statusDot.style.backgroundColor = '#4ade80';
+                statusText.textContent = 'متصل ✓';
+                console.log('✅ Connected to API at', API_URL);
+            } catch (error) {
+                statusDot.style.backgroundColor = '#ef4444';
+                statusText.textContent = 'غير متصل';
+                console.warn('⚠️ Cannot connect to API:', API_URL);
+            }
+        }
+
+        // Initialize
+        if (sessionId) {
+            sessionIdSpan.textContent = sessionId.substring(0, 8) + '...';
+        } else {
+            sessionIdSpan.textContent = 'جديد';
+        }
+        
+        checkConnection();
+        setInterval(checkConnection, 30000);
+
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        });
+
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+        clearSessionBtn.addEventListener('click', clearSession);
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            addMessage(message, 'user');
+            setInputEnabled(false);
+            showTypingIndicator();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: sessionId
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.session_id) {
+                    sessionId = data.session_id;
+                    localStorage.setItem('chatSessionId', sessionId);
+                    sessionIdSpan.textContent = sessionId.substring(0, 8) + '...';
+                }
+
+                hideTypingIndicator();
+                addMessage(formatMessage(data.reply), 'assistant', true);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                hideTypingIndicator();
+                addMessage(`
+                    ⚠️ **عذراً، حدث خطأ في الاتصال بالخادم**<br><br>
+                    <strong>الرجاء التأكد من:</strong><br>
+                    • أن السيرفر يعمل على <code>http://localhost:8000</code><br>
+                    • تم تشغيل Docker مع الأمر: <code>docker run -p 8000:8000 ...</code><br>
+                    • تم إضافة CORS في FastAPI<br><br>
+                    <strong>تفاصيل الخطأ:</strong> ${error.message}
+                `, 'assistant', true);
+            } finally {
+                setInputEnabled(true);
+                messageInput.focus();
+            }
+        }
+
+        function addMessage(content, role, isHtml = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = role === 'user' ? '👤' : '🤖';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            if (isHtml) {
+                contentDiv.innerHTML = content;
+            } else {
+                contentDiv.innerHTML = formatTextToHtml(content);
+            }
+            
+            const timeSpan = document.createElement('div');
+            timeSpan.className = 'message-time';
+            timeSpan.textContent = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            contentDiv.appendChild(timeSpan);
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+            
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function formatTextToHtml(text) {
+            if (!text) return '';
+            let html = text.replace(/\n/g, '<br>');
+            html = html.replace(/(\d+)\.\s+(.*?)(?=<br>|$)/g, (match, num, content) => {
+                return `<div class="doctor-card"><strong>${num}.</strong> ${content}</div>`;
+            });
+            return html;
+        }
+
+        function formatMessage(reply) {
+            if (!reply) return '...';
+            let formatted = reply;
+            const emojiMap = {
+                'الأطباء': '👨‍⚕️ الأطباء',
+                'المواعيد': '📅 المواعيد',
+                'حجز': '✅ حجز',
+                'تأكيد': '✔️ تأكيد',
+                'الرقم القومي': '🆔 الرقم القومي',
+                'الأعراض': '🤒 الأعراض',
+                'شكراً': '🙏 شكراً',
+                'عذراً': '😔 عذراً',
+                'متاح': '✅ متاح',
+                'محجوز': '❌ محجوز'
+            };
+            for (const [key, value] of Object.entries(emojiMap)) {
+                formatted = formatted.replace(new RegExp(key, 'g'), value);
+            }
+            return formatted;
+        }
+
+        function showTypingIndicator() {
+            if (isTyping) return;
+            isTyping = true;
+            
+            const indicatorDiv = document.createElement('div');
+            indicatorDiv.className = 'message assistant';
+            indicatorDiv.id = 'typingIndicator';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = '🤖';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.innerHTML = '<span></span><span></span><span></span>';
+            contentDiv.appendChild(typingDiv);
+            
+            indicatorDiv.appendChild(avatar);
+            indicatorDiv.appendChild(contentDiv);
+            
+            chatMessages.appendChild(indicatorDiv);
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+            isTyping = false;
+        }
+
+        async function clearSession() {
+            if (sessionId) {
+                try {
+                    await fetch(`${API_URL}/${sessionId}`, { method: 'DELETE' });
+                } catch (error) {
+                    console.error('Error clearing session:', error);
+                }
+            }
+            localStorage.removeItem('chatSessionId');
+            sessionId = null;
+            sessionIdSpan.textContent = 'جديد';
+            chatMessages.innerHTML = '';
+            addWelcomeMessage();
+        }
+
+        function setInputEnabled(enabled) {
+            messageInput.disabled = !enabled;
+            sendBtn.disabled = !enabled;
+            if (enabled) messageInput.focus();
+        }
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addWelcomeMessage() {
+            const welcomeMsg = `
+                <strong>✨ مرحباً بك في نظام حجز المواعيد الطبية!</strong><br><br>
+                <strong>يمكنني مساعدتك في:</strong><br>
+                • 🔍 البحث عن أطباء حسب التخصص والمدينة<br>
+                • 📅 عرض المواعيد المتاحة<br>
+                • ✅ حجز مواعيد جديدة<br>
+                • ❌ إلغاء حجوزات موجودة<br><br>
+                <strong>📝 فقط أخبرني بالرقم القومي والأعراض وسأقوم بالباقي!</strong>
+            `;
+            addMessage(welcomeMsg, 'assistant', true);
+        }
+    </script>
+</body>
+</html>
