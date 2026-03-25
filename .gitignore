@@ -45,3 +45,4 @@ wheels/
 *.h5
 *.parquet
 data/
+.env/
