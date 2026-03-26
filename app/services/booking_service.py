@@ -143,11 +143,12 @@ async def confirm_booking(
         logger.debug(f"Marking slot as unavailable - slot_id: {slot_id}")
         slot.is_available = False
         
-        # Step 5: Create appointment record
+        # Step 5: Create appointment record with slot_id
         logger.debug(f"Creating appointment for customer {customer.id} with doctor {doctor.id}")
         appointment = Appointment(
             customer_id=customer.id,
             doctor_id=doctor.id,
+            slot_id=slot.id,               # 🆕
             appointment_date=slot.slot_date,
             status="pending",
         )

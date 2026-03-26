@@ -10,11 +10,9 @@ from app.services.status_service import (
     get_appointment,
     get_all_appointments,
 )
-from app.schemas.appointments import StatusUpdate,AppointmentOut
+from app.schemas.appointments import StatusUpdate, AppointmentOut
 
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
-
-
 
 
 # ─────────────────────────────────────────────
@@ -37,14 +35,8 @@ async def list_appointments(
         customer = await session.get(Customer, a.customer_id)
         doctor   = await session.get(Doctor, a.doctor_id)
 
-        # Get slot time
-        slot_result = await session.execute(
-            select(DoctorSlot).where(
-                DoctorSlot.doctor_id == a.doctor_id,
-                DoctorSlot.slot_date == a.appointment_date,
-            )
-        )
-        slot = slot_result.scalar_one_or_none()
+        # Get slot time using slot_id
+        slot = await session.get(DoctorSlot, a.slot_id) if a.slot_id else None
 
         enriched.append({
             "id":               a.id,
@@ -78,13 +70,7 @@ async def get_one(
 
     customer = await session.get(Customer, a.customer_id)
     doctor   = await session.get(Doctor, a.doctor_id)
-    slot_result = await session.execute(
-        select(DoctorSlot).where(
-            DoctorSlot.doctor_id == a.doctor_id,
-            DoctorSlot.slot_date == a.appointment_date,
-        )
-    )
-    slot = slot_result.scalar_one_or_none()
+    slot = await session.get(DoctorSlot, a.slot_id) if a.slot_id else None
 
     return {
         "id":               a.id,
@@ -124,13 +110,7 @@ async def get_customer_appointments(
     enriched = []
     for a in appointments:
         doctor = await session.get(Doctor, a.doctor_id)
-        slot_result = await session.execute(
-            select(DoctorSlot).where(
-                DoctorSlot.doctor_id == a.doctor_id,
-                DoctorSlot.slot_date == a.appointment_date,
-            )
-        )
-        slot = slot_result.scalar_one_or_none()
+        slot = await session.get(DoctorSlot, a.slot_id) if a.slot_id else None
         enriched.append({
             "id":               a.id,
             "doctor_id":        a.doctor_id,
@@ -200,14 +180,8 @@ async def cancel_and_delete_appointment(
             detail=" لا يمكن حذف حجز مكتمل",
         )
 
-    # Free the linked slot so the customer (or anyone) can book again
-    slot_result = await session.execute(
-        select(DoctorSlot).where(
-            DoctorSlot.doctor_id == appointment.doctor_id,
-            DoctorSlot.slot_date == appointment.appointment_date,
-        )
-    )
-    slot = slot_result.scalar_one_or_none()
+    # Free the linked slot using slot_id directly
+    slot = await session.get(DoctorSlot, appointment.slot_id)
     if slot:
         slot.is_available = True
 

@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام حجز المواعيد الطبية - المساعد الذكي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>لوحة التحكم - نظام الحجز الطبي</title>
     <style>
         * {
             margin: 0;
@@ -13,589 +13,698 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            background: #f0f2f5;
         }
 
-        .chat-container {
-            width: 100%;
-            max-width: 800px;
-            height: 90vh;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        /* Navbar */
+        .navbar {
+            background: #2c3e50;
             color: white;
-            padding: 20px;
-            text-align: center;
-            position: relative;
-        }
-
-        .chat-header h1 {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-        }
-
-        .chat-header p {
-            font-size: 0.85rem;
-            opacity: 0.9;
-        }
-
-        .status {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.8rem;
-        }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: #4ade80;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .message {
-            display: flex;
-            gap: 12px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message.user {
-            flex-direction: row-reverse;
-        }
-
-        .message-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-
-        .message.user .message-avatar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .message.assistant .message-avatar {
-            background: #e2e8f0;
-        }
-
-        .message-content {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-
-        .message.user .message-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-bottom-left-radius: 4px;
-        }
-
-        .message.assistant .message-content {
-            background: white;
-            color: #1e293b;
-            border-bottom-right-radius: 4px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .message-time {
-            font-size: 0.7rem;
-            margin-top: 5px;
-            opacity: 0.7;
-        }
-
-        .typing-indicator {
-            display: flex;
-            gap: 4px;
-            padding: 12px 16px;
-            background: white;
-            border-radius: 18px;
-            width: fit-content;
-            border-bottom-right-radius: 4px;
-        }
-
-        .typing-indicator span {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #94a3b8;
-            animation: typing 1.4s infinite;
-        }
-
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-            30% { transform: translateY(-10px); opacity: 1; }
-        }
-
-        .chat-input-area {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .input-wrapper {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-        }
-
-        .input-wrapper textarea {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 24px;
-            font-family: inherit;
-            font-size: 1rem;
-            resize: none;
-            max-height: 100px;
-            transition: border-color 0.3s;
-        }
-
-        .input-wrapper textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .send-btn {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .send-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .send-btn:active {
-            transform: scale(0.95);
-        }
-
-        .send-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .session-controls {
+            padding: 0 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #e2e8f0;
-            font-size: 0.8rem;
-            color: #64748b;
+            flex-wrap: wrap;
         }
 
-        .clear-btn {
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 15px 0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links button {
             background: none;
             border: none;
-            color: #ef4444;
+            color: white;
+            padding: 15px 10px;
             cursor: pointer;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 5px 10px;
-            border-radius: 8px;
-            transition: background 0.2s;
+            font-size: 1rem;
+            transition: 0.2s;
         }
 
-        .clear-btn:hover {
-            background: #fee2e2;
+        .nav-links button:hover {
+            background: #34495e;
         }
 
-        .session-id {
-            font-family: monospace;
-            font-size: 0.7rem;
-            background: #f1f5f9;
-            padding: 4px 8px;
-            border-radius: 8px;
+        .nav-links button.active {
+            border-bottom: 3px solid #3498db;
         }
 
-        .doctor-card {
-            background: #f1f5f9;
-            padding: 10px;
-            border-radius: 12px;
-            margin: 8px 0;
-            border-right: 4px solid #667eea;
+        /* Main Content */
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
         }
 
-        .slot-card {
-            background: #f1f5f9;
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin: 5px 0;
+        .section {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
             display: inline-block;
+            padding-bottom: 5px;
         }
 
-        @media (max-width: 600px) {
-            .chat-container {
-                height: 95vh;
+        /* Forms */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .success {
+            color: #27ae60;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background: #fafafa;
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .card p {
+            margin: 5px 0;
+        }
+
+        .slot-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .slot-item {
+            background: #ecf0f1;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .slot-item:hover {
+            background: #bdc3c7;
+        }
+
+        .slot-item.selected {
+            background: #3498db;
+            color: white;
+        }
+
+        /* Chat specific */
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 15px;
+        }
+
+        .message.user {
+            background: #3498db;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .message.assistant {
+            background: #ecf0f1;
+            color: #333;
+            align-self: flex-start;
+        }
+
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .typing {
+            font-style: italic;
+            color: #888;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                align-items: stretch;
             }
-            
-            .message-content {
-                max-width: 85%;
-            }
-            
-            .chat-header h1 {
-                font-size: 1.2rem;
+            .nav-links {
+                justify-content: center;
             }
         }
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <div class="status">
-                <div class="status-dot" id="statusDot"></div>
-                <span id="statusText">جاري الاتصال...</span>
+    <div class="navbar">
+        <div class="logo">🏥 نظام الحجز الطبي</div>
+        <div class="nav-links">
+            <button data-section="chat">💬 محادثة ذكية</button>
+            <button data-section="booking">📅 حجز موعد</button>
+            <button data-section="services">🩺 خدمات إضافية</button>
+            <button data-section="appointments">📋 مواعيدي</button>
+            <button data-section="doctors">👨‍⚕️ الأطباء</button>
+            <button data-section="branches">🏢 الفروع</button>
+            <button data-section="package">⭐ مميزات الباقة</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Section: Chat Assistant -->
+        <div id="chat-section" class="section">
+            <h2>المساعد الطبي الذكي</h2>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">مرحباً! أنا المساعد الطبي. كيف يمكنني مساعدتك اليوم؟</div>
             </div>
-            <h1>🏥 المساعد الطبي الذكي</h1>
-            <p>نظام حجز المواعيد مع الأطباء - مدعوم بالذكاء الاصطناعي</p>
+            <div class="typing" id="typingIndicator" style="display: none;">المساعد يكتب...</div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="اكتب رسالتك..." autocomplete="off">
+                <button id="sendChatBtn">إرسال</button>
+            </div>
+            <div class="quick-actions" style="margin-top: 10px;">
+                <button class="quick-btn" data-msg="أريد حجز موعد">📅 حجز موعد</button>
+                <button class="quick-btn" data-msg="ما هي الخدمات المتاحة؟">🩺 خدماتي</button>
+                <button class="quick-btn" data-msg="عرض مميزات باقة التأمين">⭐ مميزات الباقة</button>
+                <button class="quick-btn" data-msg="رقمي القومي 12345678901234">🆔 تجربة</button>
+            </div>
         </div>
 
-        <div class="chat-messages" id="chatMessages">
-            <div class="message assistant">
-                <div class="message-avatar">🤖</div>
-                <div class="message-content">
-                    أهلاً بك في نظام حجز المواعيد الطبية! 👋<br>
-                    أنا مساعدك الذكي لحجز المواعيد مع الأطباء.<br><br>
-                    <strong>كيف يمكنني مساعدتك اليوم؟</strong><br>
-                    • لحجز موعد جديد<br>
-                    • للاستفسار عن موعد موجود<br>
-                    • لإلغاء حجز
-                    <div class="message-time">الآن</div>
+        <!-- Section: Booking -->
+        <div id="booking-section" class="section">
+            <h2>حجز موعد</h2>
+            <div id="bookingStep1">
+                <div class="form-group">
+                    <label>الرقم القومي (14 رقم)</label>
+                    <input type="text" id="bookingNationalId" placeholder="أدخل الرقم القومي">
                 </div>
+                <div class="form-group">
+                    <label>وصف الأعراض</label>
+                    <textarea id="bookingSymptom" rows="3" placeholder="مثال: صداع شديد، ألم في الصدر..."></textarea>
+                </div>
+                <button id="searchDoctorsBtn">🔍 البحث عن أطباء</button>
             </div>
+            <div id="bookingDoctorsResult" style="margin-top: 20px;"></div>
+            <div id="bookingSlotsResult" style="margin-top: 20px;"></div>
+            <div id="bookingConfirmResult" style="margin-top: 20px;"></div>
         </div>
 
-        <div class="chat-input-area">
-            <div class="input-wrapper">
-                <textarea 
-                    id="messageInput" 
-                    placeholder="اكتب رسالتك هنا..." 
-                    rows="1"
-                    maxlength="1000"
-                ></textarea>
-                <button class="send-btn" id="sendBtn">📤</button>
+        <!-- Section: Services -->
+        <div id="services-section" class="section">
+            <h2>الخدمات الإضافية</h2>
+            <div class="form-group">
+                <label>الرقم القومي</label>
+                <input type="text" id="serviceNationalId" placeholder="أدخل الرقم القومي">
             </div>
-            <div class="session-controls">
-                <button class="clear-btn" id="clearSessionBtn">
-                    🗑️ مسح المحادثة
-                </button>
-                <div class="session-id" id="sessionId">جاري التحميل...</div>
+            <div class="form-group">
+                <label>المدينة</label>
+                <input type="text" id="serviceCity" placeholder="مثال: القاهرة">
             </div>
+            <div class="form-group">
+                <label>الأعراض (لاقتراح الخدمات)</label>
+                <textarea id="serviceSymptom" rows="3" placeholder="مثال: سكر، ضغط، صداع..."></textarea>
+            </div>
+            <button id="getAvailableServicesBtn">🔍 عرض الخدمات المتاحة</button>
+            <div id="servicesResult" style="margin-top: 20px;"></div>
+            <div id="serviceRequestResult" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- Section: My Appointments -->
+        <div id="appointments-section" class="section">
+            <h2>مواعيدي</h2>
+            <div class="form-group">
+                <label>الرقم القومي</label>
+                <input type="text" id="appointmentNationalId" placeholder="أدخل الرقم القومي">
+                <button id="loadAppointmentsBtn" style="margin-top: 10px;">📋 عرض المواعيد</button>
+            </div>
+            <div id="appointmentsList"></div>
+        </div>
+
+        <!-- Section: Doctors -->
+        <div id="doctors-section" class="section">
+            <h2>قائمة الأطباء</h2>
+            <div class="form-group">
+                <label>فلترة حسب المدينة (اختياري)</label>
+                <input type="text" id="filterCity" placeholder="المدينة">
+                <button id="filterDoctorsBtn" style="margin-top: 5px;">بحث</button>
+            </div>
+            <div id="doctorsList" class="card-grid"></div>
+        </div>
+
+        <!-- Section: Branches -->
+        <div id="branches-section" class="section">
+            <h2>الفروع</h2>
+            <div id="branchesList" class="card-grid"></div>
+        </div>
+
+        <!-- Section: Package Benefits -->
+        <div id="package-section" class="section">
+            <h2>مميزات باقة التأمين</h2>
+            <div class="form-group">
+                <label>الرقم القومي</label>
+                <input type="text" id="packageNationalId" placeholder="أدخل الرقم القومي">
+                <button id="getPackageBenefitsBtn" style="margin-top: 10px;">عرض المميزات</button>
+            </div>
+            <div id="packageBenefitsResult"></div>
         </div>
     </div>
 
     <script>
-        // ✅ API URL - مضبوط لـ localhost:8000
-        const API_URL = 'http://localhost:8000/chat';
-        
-        let sessionId = localStorage.getItem('chatSessionId') || null;
-        let isTyping = false;
+        const API_BASE = 'http://localhost:8000';
+        let chatSessionId = localStorage.getItem('chat_session_id') || null;
 
-        const chatMessages = document.getElementById('chatMessages');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const clearSessionBtn = document.getElementById('clearSessionBtn');
-        const sessionIdSpan = document.getElementById('sessionId');
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-
-        // Check connection to API
-        async function checkConnection() {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
-                
-                const response = await fetch(API_URL, {
-                    method: 'OPTIONS',
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                statusDot.style.backgroundColor = '#4ade80';
-                statusText.textContent = 'متصل ✓';
-                console.log('✅ Connected to API at', API_URL);
-            } catch (error) {
-                statusDot.style.backgroundColor = '#ef4444';
-                statusText.textContent = 'غير متصل';
-                console.warn('⚠️ Cannot connect to API:', API_URL);
-            }
-        }
-
-        // Initialize
-        if (sessionId) {
-            sessionIdSpan.textContent = sessionId.substring(0, 8) + '...';
-        } else {
-            sessionIdSpan.textContent = 'جديد';
-        }
-        
-        checkConnection();
-        setInterval(checkConnection, 30000);
-
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-        });
-
-        messageInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        sendBtn.addEventListener('click', sendMessage);
-        clearSessionBtn.addEventListener('click', clearSession);
-
-        async function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message) return;
-
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
-            addMessage(message, 'user');
-            setInputEnabled(false);
-            showTypingIndicator();
-
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        message: message,
-                        session_id: sessionId
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${errorText}`);
-                }
-
-                const data = await response.json();
-                
-                if (data.session_id) {
-                    sessionId = data.session_id;
-                    localStorage.setItem('chatSessionId', sessionId);
-                    sessionIdSpan.textContent = sessionId.substring(0, 8) + '...';
-                }
-
-                hideTypingIndicator();
-                addMessage(formatMessage(data.reply), 'assistant', true);
-                
-            } catch (error) {
-                console.error('Error:', error);
-                hideTypingIndicator();
-                addMessage(`
-                    ⚠️ **عذراً، حدث خطأ في الاتصال بالخادم**<br><br>
-                    <strong>الرجاء التأكد من:</strong><br>
-                    • أن السيرفر يعمل على <code>http://localhost:8000</code><br>
-                    • تم تشغيل Docker مع الأمر: <code>docker run -p 8000:8000 ...</code><br>
-                    • تم إضافة CORS في FastAPI<br><br>
-                    <strong>تفاصيل الخطأ:</strong> ${error.message}
-                `, 'assistant', true);
-            } finally {
-                setInputEnabled(true);
-                messageInput.focus();
-            }
-        }
-
-        function addMessage(content, role, isHtml = false) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${role}`;
-            
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.textContent = role === 'user' ? '👤' : '🤖';
-            
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
-            
-            if (isHtml) {
-                contentDiv.innerHTML = content;
-            } else {
-                contentDiv.innerHTML = formatTextToHtml(content);
-            }
-            
-            const timeSpan = document.createElement('div');
-            timeSpan.className = 'message-time';
-            timeSpan.textContent = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-            contentDiv.appendChild(timeSpan);
-            
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(contentDiv);
-            
-            chatMessages.appendChild(messageDiv);
-            scrollToBottom();
-        }
-
-        function formatTextToHtml(text) {
-            if (!text) return '';
-            let html = text.replace(/\n/g, '<br>');
-            html = html.replace(/(\d+)\.\s+(.*?)(?=<br>|$)/g, (match, num, content) => {
-                return `<div class="doctor-card"><strong>${num}.</strong> ${content}</div>`;
+        // Navigation
+        document.querySelectorAll('[data-section]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const sectionId = btn.getAttribute('data-section') + '-section';
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(sectionId).classList.add('active');
+                document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
             });
-            return html;
-        }
+        });
+        // Activate default section
+        document.querySelector('[data-section="chat"]').click();
 
-        function formatMessage(reply) {
-            if (!reply) return '...';
-            let formatted = reply;
-            const emojiMap = {
-                'الأطباء': '👨‍⚕️ الأطباء',
-                'المواعيد': '📅 المواعيد',
-                'حجز': '✅ حجز',
-                'تأكيد': '✔️ تأكيد',
-                'الرقم القومي': '🆔 الرقم القومي',
-                'الأعراض': '🤒 الأعراض',
-                'شكراً': '🙏 شكراً',
-                'عذراً': '😔 عذراً',
-                'متاح': '✅ متاح',
-                'محجوز': '❌ محجوز'
+        // ---------- Helper Functions ----------
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: { 'Content-Type': 'application/json' }
             };
-            for (const [key, value] of Object.entries(emojiMap)) {
-                formatted = formatted.replace(new RegExp(key, 'g'), value);
+            if (body) options.body = JSON.stringify(body);
+            const response = await fetch(`${API_BASE}${endpoint}`, options);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || `HTTP ${response.status}`);
             }
-            return formatted;
+            return await response.json();
         }
 
-        function showTypingIndicator() {
-            if (isTyping) return;
-            isTyping = true;
-            
-            const indicatorDiv = document.createElement('div');
-            indicatorDiv.className = 'message assistant';
-            indicatorDiv.id = 'typingIndicator';
-            
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.textContent = '🤖';
-            
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
-            
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'typing-indicator';
-            typingDiv.innerHTML = '<span></span><span></span><span></span>';
-            contentDiv.appendChild(typingDiv);
-            
-            indicatorDiv.appendChild(avatar);
-            indicatorDiv.appendChild(contentDiv);
-            
-            chatMessages.appendChild(indicatorDiv);
-            scrollToBottom();
+        function displayMessage(container, html, isError = false) {
+            container.innerHTML = html;
         }
 
-        function hideTypingIndicator() {
-            const indicator = document.getElementById('typingIndicator');
-            if (indicator) indicator.remove();
-            isTyping = false;
-        }
+        // ---------- Chat ----------
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+        const typingIndicator = document.getElementById('typingIndicator');
 
-        async function clearSession() {
-            if (sessionId) {
-                try {
-                    await fetch(`${API_URL}/${sessionId}`, { method: 'DELETE' });
-                } catch (error) {
-                    console.error('Error clearing session:', error);
-                }
-            }
-            localStorage.removeItem('chatSessionId');
-            sessionId = null;
-            sessionIdSpan.textContent = 'جديد';
-            chatMessages.innerHTML = '';
-            addWelcomeMessage();
-        }
-
-        function setInputEnabled(enabled) {
-            messageInput.disabled = !enabled;
-            sendBtn.disabled = !enabled;
-            if (enabled) messageInput.focus();
-        }
-
-        function scrollToBottom() {
+        function addChatMessage(content, isUser = false, isError = false) {
+            const div = document.createElement('div');
+            div.className = `message ${isUser ? 'user' : (isError ? 'error' : 'assistant')}`;
+            div.textContent = content;
+            chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        function addWelcomeMessage() {
-            const welcomeMsg = `
-                <strong>✨ مرحباً بك في نظام حجز المواعيد الطبية!</strong><br><br>
-                <strong>يمكنني مساعدتك في:</strong><br>
-                • 🔍 البحث عن أطباء حسب التخصص والمدينة<br>
-                • 📅 عرض المواعيد المتاحة<br>
-                • ✅ حجز مواعيد جديدة<br>
-                • ❌ إلغاء حجوزات موجودة<br><br>
-                <strong>📝 فقط أخبرني بالرقم القومي والأعراض وسأقوم بالباقي!</strong>
-            `;
-            addMessage(welcomeMsg, 'assistant', true);
+        async function sendChatMessage(message) {
+            if (!message.trim()) return;
+            addChatMessage(message, true);
+            chatInput.value = '';
+            typingIndicator.style.display = 'block';
+            try {
+                const payload = { message, session_id: chatSessionId };
+                const data = await apiCall('/chat', 'POST', payload);
+                if (data.session_id && !chatSessionId) {
+                    chatSessionId = data.session_id;
+                    localStorage.setItem('chat_session_id', chatSessionId);
+                }
+                addChatMessage(data.reply);
+            } catch (error) {
+                addChatMessage('حدث خطأ في الاتصال بالخادم.', false, true);
+            } finally {
+                typingIndicator.style.display = 'none';
+            }
         }
+
+        sendChatBtn.addEventListener('click', () => sendChatMessage(chatInput.value));
+        chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(chatInput.value); });
+        document.querySelectorAll('.quick-btn').forEach(btn => {
+            btn.addEventListener('click', () => sendChatMessage(btn.getAttribute('data-msg')));
+        });
+
+        // ---------- Booking ----------
+        const bookingNationalId = document.getElementById('bookingNationalId');
+        const bookingSymptom = document.getElementById('bookingSymptom');
+        const bookingDoctorsResult = document.getElementById('bookingDoctorsResult');
+        const bookingSlotsResult = document.getElementById('bookingSlotsResult');
+        const bookingConfirmResult = document.getElementById('bookingConfirmResult');
+
+        let selectedDoctor = null;
+        let selectedSlot = null;
+
+        document.getElementById('searchDoctorsBtn').addEventListener('click', async () => {
+            const nationalId = bookingNationalId.value.trim();
+            const symptom = bookingSymptom.value.trim();
+            if (!nationalId || !symptom) {
+                bookingDoctorsResult.innerHTML = '<div class="error">الرجاء إدخال الرقم القومي والأعراض</div>';
+                return;
+            }
+            try {
+                const data = await apiCall('/booking/search', 'POST', { national_id: nationalId, symptom });
+                let html = `<h3>الأطباء المتاحون في شبكتك (${data.specialization})</h3><div class="card-grid">`;
+                data.doctors.forEach(doc => {
+                    html += `<div class="card" data-doctor-id="${doc.id}" data-doctor-name="${doc.name}" data-doctor-specialization="${doc.specialization}">
+                        <h3>${doc.name}</h3>
+                        <p>التخصص: ${doc.specialization}</p>
+                        <p>المدينة: ${doc.city}</p>
+                        <button class="selectDoctorBtn">اختيار</button>
+                    </div>`;
+                });
+                html += '</div>';
+                bookingDoctorsResult.innerHTML = html;
+                document.querySelectorAll('.selectDoctorBtn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const card = e.target.closest('.card');
+                        selectedDoctor = {
+                            id: parseInt(card.getAttribute('data-doctor-id')),
+                            name: card.getAttribute('data-doctor-name'),
+                            specialization: card.getAttribute('data-doctor-specialization')
+                        };
+                        bookingDoctorsResult.innerHTML += `<p>تم اختيار الدكتور: ${selectedDoctor.name}</p>`;
+                        loadSlots(selectedDoctor.id);
+                    });
+                });
+            } catch (error) {
+                bookingDoctorsResult.innerHTML = `<div class="error">${error.message}</div>`;
+            }
+        });
+
+        async function loadSlots(doctorId) {
+            try {
+                const data = await apiCall(`/slots/${doctorId}`, 'GET');
+                let html = `<h3>مواعيد متاحة للدكتور ${data.doctor_name}</h3><div class="slot-list">`;
+                data.available_slots.forEach(slot => {
+                    html += `<div class="slot-item" data-slot-id="${slot.id}" data-slot-date="${slot.slot_date}" data-slot-time="${slot.slot_time}">
+                        📅 ${slot.slot_date} | 🕒 ${slot.slot_time}
+                    </div>`;
+                });
+                html += '</div><button id="confirmBookingBtn">تأكيد الحجز</button>';
+                bookingSlotsResult.innerHTML = html;
+                document.querySelectorAll('.slot-item').forEach(el => {
+                    el.addEventListener('click', () => {
+                        document.querySelectorAll('.slot-item').forEach(s => s.classList.remove('selected'));
+                        el.classList.add('selected');
+                        selectedSlot = {
+                            id: parseInt(el.getAttribute('data-slot-id')),
+                            date: el.getAttribute('data-slot-date'),
+                            time: el.getAttribute('data-slot-time')
+                        };
+                    });
+                });
+                document.getElementById('confirmBookingBtn').addEventListener('click', async () => {
+                    if (!selectedSlot) {
+                        alert('الرجاء اختيار موعد');
+                        return;
+                    }
+                    try {
+                        const confirmData = await apiCall('/booking/confirm', 'POST', {
+                            national_id: bookingNationalId.value.trim(),
+                            doctor_id: selectedDoctor.id,
+                            slot_id: selectedSlot.id
+                        });
+                        bookingConfirmResult.innerHTML = `<div class="success">✅ تم الحجز بنجاح! رقم الحجز: ${confirmData.appointment_id}</div>`;
+                    } catch (error) {
+                        bookingConfirmResult.innerHTML = `<div class="error">${error.message}</div>`;
+                    }
+                });
+            } catch (error) {
+                bookingSlotsResult.innerHTML = `<div class="error">${error.message}</div>`;
+            }
+        }
+
+        // ---------- Services ----------
+        const serviceNationalId = document.getElementById('serviceNationalId');
+        const serviceCity = document.getElementById('serviceCity');
+        const serviceSymptom = document.getElementById('serviceSymptom');
+        const servicesResult = document.getElementById('servicesResult');
+        const serviceRequestResult = document.getElementById('serviceRequestResult');
+
+        document.getElementById('getAvailableServicesBtn').addEventListener('click', async () => {
+            const nationalId = serviceNationalId.value.trim();
+            const city = serviceCity.value.trim();
+            const symptom = serviceSymptom.value.trim();
+            if (!nationalId || !city || !symptom) {
+                servicesResult.innerHTML = '<div class="error">الرجاء ملء جميع الحقول</div>';
+                return;
+            }
+            try {
+                const data = await apiCall(`/services/available?symptom=${encodeURIComponent(symptom)}&city=${encodeURIComponent(city)}&package_id=1`, 'GET');
+                // Since we need package_id, we could first get package via customer, but for demo use package 1.
+                // Better: first get customer's package via /booking/search? Actually we can call /booking/search to get package? Not directly.
+                // For simplicity, assume package_id=1.
+                let html = '<h3>الخدمات المتاحة حسب الأعراض والموقع</h3>';
+                if (data.available_branches && data.available_branches.length) {
+                    data.available_branches.forEach(branch => {
+                        html += `<div class="card"><h3>${branch.branch_name}</h3><p>العنوان: ${branch.address}</p><h4>الخدمات:</h4><ul>`;
+                        branch.services.forEach(service => {
+                            html += `<li>${service.name} (${service.service_type}) - ${service.base_price} جنيه
+                                    <button class="requestServiceBtn" data-service-id="${service.service_id}" data-branch-id="${branch.branch_id}">طلب هذه الخدمة</button></li>`;
+                        });
+                        html += `</ul></div>`;
+                    });
+                } else {
+                    html += '<p>لا توجد خدمات متاحة حالياً.</p>';
+                }
+                servicesResult.innerHTML = html;
+                document.querySelectorAll('.requestServiceBtn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const serviceId = parseInt(btn.getAttribute('data-service-id'));
+                        const branchId = parseInt(btn.getAttribute('data-branch-id'));
+                        // Need slot_id and appointment_id. For demo, we'll need to ask user for date/time and appointment ID.
+                        // We'll prompt for date/time and use a dummy appointment_id (if not known).
+                        const requestedDate = prompt('أدخل التاريخ المطلوب (YYYY-MM-DD):');
+                        const requestedTime = prompt('أدخل الوقت المطلوب (HH:MM:SS):');
+                        if (!requestedDate || !requestedTime) return;
+                        // Check availability
+                        const check = await apiCall('/services/check-availability', 'POST', {
+                            service_id: serviceId,
+                            branch_id: branchId,
+                            requested_date: requestedDate,
+                            requested_time: requestedTime
+                        });
+                        if (!check.available) {
+                            serviceRequestResult.innerHTML = `<div class="error">${check.message}</div>`;
+                            return;
+                        }
+                        const slotId = check.slot_id;
+                        const appointmentId = prompt('أدخل رقم الحجز الطبي الأساسي (إن وجد):');
+                        if (!appointmentId) return;
+                        const requestData = await apiCall('/services/request', 'POST', {
+                            national_id: nationalId,
+                            service_id: serviceId,
+                            branch_id: branchId,
+                            slot_id: slotId,
+                            appointment_id: parseInt(appointmentId)
+                        });
+                        serviceRequestResult.innerHTML = `<div class="success">✅ تم طلب الخدمة بنجاح. رقم الطلب: ${requestData.request_id}</div>`;
+                    });
+                });
+            } catch (error) {
+                servicesResult.innerHTML = `<div class="error">${error.message}</div>`;
+            }
+        });
+
+        // ---------- Appointments ----------
+        const appointmentNationalId = document.getElementById('appointmentNationalId');
+        const appointmentsList = document.getElementById('appointmentsList');
+        document.getElementById('loadAppointmentsBtn').addEventListener('click', async () => {
+            const nationalId = appointmentNationalId.value.trim();
+            if (!nationalId) {
+                appointmentsList.innerHTML = '<div class="error">الرجاء إدخال الرقم القومي</div>';
+                return;
+            }
+            try {
+                const data = await apiCall(`/appointments/customer/${nationalId}`, 'GET');
+                let html = `<h3>مواعيد ${data.customer_name}</h3>`;
+                if (data.appointments.length === 0) {
+                    html += '<p>لا توجد مواعيد.</p>';
+                } else {
+                    html += `<div class="card-grid">`;
+                    data.appointments.forEach(app => {
+                        html += `<div class="card">
+                            <h3>رقم الحجز: ${app.id}</h3>
+                            <p>الدكتور: ${app.doctor_name}</p>
+                            <p>التاريخ: ${app.appointment_date}</p>
+                            <p>الوقت: ${app.appointment_time || 'غير محدد'}</p>
+                            <p>الحالة: ${app.status}</p>
+                            ${app.status !== 'completed' ? `<button class="cancelAppointmentBtn" data-id="${app.id}">إلغاء الحجز</button>` : ''}
+                        </div>`;
+                    });
+                    html += `</div>`;
+                }
+                appointmentsList.innerHTML = html;
+                document.querySelectorAll('.cancelAppointmentBtn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const appId = parseInt(btn.getAttribute('data-id'));
+                        if (confirm('هل أنت متأكد من إلغاء هذا الحجز؟')) {
+                            try {
+                                await fetch(`${API_BASE}/appointments/${appId}`, { method: 'DELETE' });
+                                alert('تم إلغاء الحجز بنجاح');
+                                document.getElementById('loadAppointmentsBtn').click(); // reload
+                            } catch (error) {
+                                alert('فشل الإلغاء: ' + error.message);
+                            }
+                        }
+                    });
+                });
+            } catch (error) {
+                appointmentsList.innerHTML = `<div class="error">${error.message}</div>`;
+            }
+        });
+
+        // ---------- Doctors ----------
+        const filterCity = document.getElementById('filterCity');
+        const doctorsList = document.getElementById('doctorsList');
+        async function loadDoctors(city = '') {
+            try {
+                let url = '/doctors';
+                if (city) url += `/${encodeURIComponent(city)}`;
+                const data = await apiCall(url, 'GET');
+                let html = '';
+                data.forEach(doc => {
+                    html += `<div class="card"><h3>${doc.name}</h3><p>التخصص: ${doc.specialization}</p><p>المدينة: ${doc.city}</p></div>`;
+                });
+                doctorsList.innerHTML = html;
+            } catch (error) {
+                doctorsList.innerHTML = `<div class="error">${error.message}</div>`;
+            }
+        }
+        document.getElementById('filterDoctorsBtn').addEventListener('click', () => {
+            loadDoctors(filterCity.value.trim());
+        });
+        loadDoctors();
+
+        // ---------- Branches ----------
+        const branchesList = document.getElementById('branchesList');
+        async function loadBranches() {
+            try {
+                const data = await apiCall('/branches', 'GET');
+                let html = '';
+                data.forEach(branch => {
+                    html += `<div class="card"><h3>${branch.name_ar}</h3><p>العنوان: ${branch.address}</p><p>الهاتف: ${branch.phone}</p></div>`;
+                });
+                branchesList.innerHTML = html;
+            } catch (error) {
+                branchesList.innerHTML = `<div class="error">${error.message}</div>`;
+            }
+        }
+        loadBranches();
+
+        // ---------- Package Benefits ----------
+        const packageNationalId = document.getElementById('packageNationalId');
+        const packageBenefitsResult = document.getElementById('packageBenefitsResult');
+        document.getElementById('getPackageBenefitsBtn').addEventListener('click', async () => {
+            const nationalId = packageNationalId.value.trim();
+            if (!nationalId) {
+                packageBenefitsResult.innerHTML = '<div class="error">الرجاء إدخال الرقم القومي</div>';
+                return;
+            }
+            try {
+                // First get customer's package via booking/search or directly? We'll call /booking/search with dummy symptom to get package? Not ideal.
+                // Better: use the /services/package/{package_id}/benefits but we need package_id. We can get it from /booking/search but that returns doctors.
+                // For simplicity, we'll assume we have a separate endpoint to get customer's policy. But it's not exposed. So we'll use /booking/search with dummy symptom.
+                // The search returns data that includes the specialization, but not package_id. Actually search returns customer and doctors but not package.
+                // We'll call a new endpoint that returns package info? Not available. So we'll use a workaround: get customer from /customers/{national_id}? That returns customer but not package.
+                // Since we don't have a direct package info endpoint, we'll use a dummy package_id (1) for demo.
+                const data = await apiCall(`/services/package/1/benefits`, 'GET');
+                let html = `<h3>مميزات باقة التأمين</h3>
+                            <p>اسم الباقة: ${data.package_name}</p>
+                            <p>نسبة الخصم: ${data.discount_percentage * 100}%</p>
+                            <p>الحد الأقصى للتحاليل شهرياً: ${data.max_lab_tests_per_month}</p>
+                            <p>الحد الأقصى للأشعة شهرياً: ${data.max_radiology_per_month}</p>
+                            <h4>الخدمات المشمولة:</h4><ul>`;
+                data.services.forEach(s => {
+                    html += `<li>${s.name} - نسبة المشاركة: ${s.co_payment * 100}% - الحد الشهري: ${s.max_visits_per_month}</li>`;
+                });
+                html += `</ul>`;
+                packageBenefitsResult.innerHTML = html;
+            } catch (error) {
+                packageBenefitsResult.innerHTML = `<div class="error">${error.message}</div>`;
+            }
+        });
     </script>
 </body>
 </html>
