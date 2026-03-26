@@ -12,6 +12,13 @@ from app.models import (
     Doctor,
     DoctorNetwork,
     Appointment,
+    DoctorSlot,
+    Service,           
+    ServicePrice,      
+    Branch,            
+    ServiceAvailability, 
+    ServiceRequest,   
+    Medicine,         
 )
 import os
 from dotenv import load_dotenv
@@ -66,11 +73,21 @@ async def get_session() -> AsyncSession:
 async def create_all_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("✅ All tables created.")
+    print(" All tables created.")
+
+
+# =============================================
+# Drop all tables (useful for testing/development)
+# =============================================
+async def drop_all_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    print(" All tables dropped.")
+
 
 # =============================================
 # Dispose engine on shutdown
 # =============================================
 async def close_db():
     await engine.dispose()
-    print(" DB connection closed.")
+    print("DB connection closed.")

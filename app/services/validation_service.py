@@ -2,7 +2,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from datetime import date
-from app.models import Customer, Policy, Package, Appointment
+from app.models import Customer, Policy, Package, Appointment, ServiceRequest, Service
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -193,6 +193,84 @@ async def validate_no_pending(customer_id: int, session: AsyncSession):
     except Exception as e:
         logger.error(f"Unexpected error in validate_no_pending: {e}", exc_info=True)
         raise ValueError("An error occurred while checking pending appointments")
+
+
+# =============================================
+# 5. Validate Service Limits (New)
+# =============================================
+async def validate_service_limits(
+    customer_id: int,
+    package_id: int,
+    service_type: str,
+    session: AsyncSession
+):
+    """
+    Validate monthly limits for lab tests and radiology services.
+    
+    Args:
+        customer_id: Customer ID
+        package_id: Insurance package ID
+        service_type: Type of service ('lab_test' or 'radiology')
+        session: Database session
+        
+    Raises:
+        ValueError: If limit is exceeded
+    """
+    today = date.today()
+    logger.info(f"Validating service limits - customer_id: {customer_id}, service_type: {service_type}")
+    
+    try:
+        # Get package details
+        result = await session.execute(
+            select(Package).where(Package.id == package_id)
+        )
+        package = result.scalar_one_or_none()
+        
+        if not package:
+            logger.warning(f"Package not found - package_id: {package_id}")
+            return  # No limits to check if package missing
+        
+        # Determine max limit based on service type
+        max_limit = None
+        if service_type == "lab_test":
+            max_limit = package.max_lab_tests_per_month
+        elif service_type == "radiology":
+            max_limit = package.max_radiology_per_month
+        
+        if max_limit is None:
+            # No limit defined for this service type
+            return
+        
+        # Count requests this month for this service type
+        query = (
+            select(func.count(ServiceRequest.id))
+            .join(Service, ServiceRequest.service_id == Service.id)
+            .where(
+                ServiceRequest.customer_id == customer_id,
+                Service.service_type == service_type,
+                func.month(ServiceRequest.request_date) == today.month,
+                func.year(ServiceRequest.request_date) == today.year,
+                ServiceRequest.status.in_(["pending", "approved", "completed"])
+            )
+        )
+        
+        result = await session.execute(query)
+        count = result.scalar() or 0
+        
+        logger.info(f"Customer has {count} {service_type} requests this month (limit: {max_limit})")
+        
+        if count >= max_limit:
+            logger.warning(f"Service limit exceeded - customer_id: {customer_id}, "
+                          f"type: {service_type}, count: {count}, limit: {max_limit}")
+            raise ValueError(f"تجاوزت الحد الشهري للخدمات من نوع {service_type} ({max_limit} مرة في الشهر)")
+        
+        logger.info(f"Service limit validation passed - {count}/{max_limit} for {service_type}")
+        
+    except ValueError as e:
+        raise
+    except Exception as e:
+        logger.error(f"Error validating service limits: {e}", exc_info=True)
+        raise
 
 
 # =============================================

@@ -10,7 +10,6 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 # =============================================
 # POST /admin/doctors/{doctor_id}/slots
-# الدكتور يضيف ميعاد جديد
 # =============================================
 
 
@@ -25,9 +24,8 @@ async def add_slot(
     )
     doctor = result.scalar_one_or_none()
     if not doctor:
-        raise HTTPException(status_code=404, detail="❌ الدكتور غير موجود")
+        raise HTTPException(status_code=404, detail="الدكتور غير موجود")
 
-    # تحقق مفيش slot بنفس التاريخ والوقت
     existing = await session.execute(
         select(DoctorSlot).where(
             DoctorSlot.doctor_id == doctor_id,
@@ -38,7 +36,7 @@ async def add_slot(
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=400,
-            detail="❌ هذا الميعاد موجود بالفعل"
+            detail="هذا الميعاد موجود بالفعل"
         )
 
     slot = DoctorSlot(
@@ -52,7 +50,7 @@ async def add_slot(
     await session.refresh(slot)
 
     return {
-        "message":   f"✅ تم إضافة الميعاد للدكتور {doctor.name}",
+        "message":   f"تم إضافة الميعاد للدكتور {doctor.name}",
         "slot_id":   slot.id,
         "slot_date": slot.slot_date,
         "slot_time": str(slot.slot_time),
@@ -61,7 +59,6 @@ async def add_slot(
 
 # =============================================
 # GET /admin/doctors/{doctor_id}/slots
-# كل مواعيد الدكتور (متاح + محجوز)
 # =============================================
 @router.get("/doctors/{doctor_id}/slots")
 async def get_all_doctor_slots(
@@ -73,7 +70,7 @@ async def get_all_doctor_slots(
     )
     doctor = result.scalar_one_or_none()
     if not doctor:
-        raise HTTPException(status_code=404, detail="❌ الدكتور غير موجود")
+        raise HTTPException(status_code=404, detail="الدكتور غير موجود")
 
     result = await session.execute(
         select(DoctorSlot)
@@ -103,7 +100,6 @@ async def get_all_doctor_slots(
 
 # =============================================
 # DELETE /admin/slots/{slot_id}
-# الدكتور يلغي ميعاد
 # =============================================
 @router.delete("/slots/{slot_id}")
 async def delete_slot(
@@ -115,23 +111,22 @@ async def delete_slot(
     )
     slot = result.scalar_one_or_none()
     if not slot:
-        raise HTTPException(status_code=404, detail="❌ الميعاد غير موجود")
+        raise HTTPException(status_code=404, detail="الميعاد غير موجود")
 
     if not slot.is_available:
         raise HTTPException(
             status_code=400,
-            detail="❌ لا يمكن حذف ميعاد محجوز — قم بإلغاء الحجز أولاً"
+            detail=" لا يمكن حذف ميعاد محجوز — قم بإلغاء الحجز أولاً"
         )
 
     await session.delete(slot)
     await session.commit()
 
-    return {"message": f"✅ تم حذف الميعاد رقم {slot_id}"}
+    return {"message": f" تم حذف الميعاد رقم {slot_id}"}
 
 
 # =============================================
 # GET /admin/doctors/
-# كل الأطباء مع عدد مواعيدهم
 # =============================================
 @router.get("/doctors/")
 async def get_all_doctors_summary(

@@ -216,3 +216,4 @@ async def run_recommendation(
     except Exception as e:
         logger.error(f"Unexpected error in run_recommendation: {e}", exc_info=True)
         raise ValueError("حدث خطأ أثناء البحث عن الأطباء")
+    
