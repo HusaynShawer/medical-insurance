@@ -1,9 +1,15 @@
+import logging
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from datetime import date
-from app.models import Doctor, DoctorSlot, DoctorNetwork, Policy, Customer
-from app.services.validation_service import run_all_validations
-from app.services.booking_service import confirm_booking as _confirm_booking
+from sqlalchemy import select
+from app.models import Doctor, DoctorSlot
+from app.services.booking_service import (
+    search_doctors as _search_doctors,
+    confirm_booking as _confirm_booking,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
 async def search_doctors(
@@ -11,93 +17,81 @@ async def search_doctors(
     symptom: str,
     session: AsyncSession,
 ) -> dict:
+    logger.info(f"Searching doctors - national_id: {national_id}, symptom: {symptom}")
     try:
-        customer, policy = await run_all_validations(national_id, session)
+        result = await _search_doctors(
+            national_id=national_id,
+            symptom=symptom,
+            session=session,
+        )
+        logger.info(f"Successfully searched doctors - found {len(result.get('doctors', []))} doctors")
+        return result
     except ValueError as e:
+        logger.warning(f"ValueError in search_doctors: {str(e)}")
         return {"error": str(e)}
-
-    result = await session.execute(
-        select(Doctor)
-        .join(DoctorNetwork, DoctorNetwork.doctor_id == Doctor.id)
-        .where(DoctorNetwork.package_id == policy.package_id)
-    )
-    all_doctors = result.scalars().all()
-
-    if not all_doctors:
-        return {
-            "error": f"لا يوجد أطباء في شبكة تأمين العميل",
-            "customer_name": customer.name,
-            "city": customer.city,
-        }
-
-    return {
-        "customer_name": customer.name,
-        "city": customer.city,
-        "package_id": policy.package_id,
-        "symptom_received": symptom,
-        "doctors": [
-            {
-                "id": d.id,
-                "name": d.name,
-                "specialization": d.specialization,
-                "city": d.city,
-            }
-            for d in all_doctors
-        ]
-    }
+    except Exception as e:
+        logger.error(f"Unexpected error in search_doctors: {str(e)}", exc_info=True)
+        return {"error": "An unexpected error occurred"}
 
 
 async def get_slots(
     doctor_id: int,
     session: AsyncSession,
 ) -> dict:
-    result = await session.execute(
-        select(Doctor).where(Doctor.id == doctor_id)
-    )
-    doctor = result.scalar_one_or_none()
-
-    if not doctor:
-        return {"error": "الدكتور غير موجود"}
-
-    today = date.today()
-    result = await session.execute(
-        select(DoctorSlot)
-        .where(
-            DoctorSlot.doctor_id == doctor_id,
-            DoctorSlot.slot_date >= today,
-            DoctorSlot.is_available == True,
+    logger.info(f"Fetching slots for doctor_id: {doctor_id}")
+    try:
+        result = await session.execute(
+            select(Doctor).where(Doctor.id == doctor_id)
         )
-        .order_by(DoctorSlot.slot_date, DoctorSlot.slot_time)
-    )
-    slots = result.scalars().all()
+        doctor = result.scalar_one_or_none()
+        if not doctor:
+            logger.warning(f"Doctor not found - doctor_id: {doctor_id}")
+            return {"error": "الدكتور غير موجود"}
 
-    if not slots:
-        return {
-            "error": f"لا توجد مواعيد متاحة للدكتور {doctor.name}",
-            "doctor_name": doctor.name,
-        }
+        today = date.today()
+        logger.debug(f"Fetching available slots from {today} for doctor_id: {doctor_id}")
+        
+        result = await session.execute(
+            select(DoctorSlot)
+            .where(
+                DoctorSlot.doctor_id    == doctor_id,
+                DoctorSlot.slot_date    >= today,
+                DoctorSlot.is_available == True,
+            )
+            .order_by(DoctorSlot.slot_date, DoctorSlot.slot_time)
+        )
+        slots = result.scalars().all()
+        
+        logger.info(f"Found {len(slots)} available slots for doctor {doctor.name} (id: {doctor_id})")
 
-    return {
-        "doctor_id": doctor.id,
-        "doctor_name": doctor.name,
-        "specialization": doctor.specialization,
-        "slots": [
-            {
-                "id": s.id,
-                "date": str(s.slot_date),
-                "time": str(s.slot_time),
+        if not slots:
+            logger.info(f"No available slots for doctor {doctor.name} (id: {doctor_id})")
+            return {
+                "error":       f"لا توجد مواعيد متاحة للدكتور {doctor.name}",
+                "doctor_name": doctor.name,
             }
-            for s in slots
-        ]
-    }
+
+        return {
+            "doctor_id":      doctor.id,
+            "doctor_name":    doctor.name,
+            "specialization": doctor.specialization,
+            "slots": [
+                {"id": s.id, "date": str(s.slot_date), "time": str(s.slot_time)}
+                for s in slots
+            ],
+        }
+    except Exception as e:
+        logger.error(f"Error fetching slots for doctor_id {doctor_id}: {str(e)}", exc_info=True)
+        return {"error": "An unexpected error occurred while fetching slots"}
 
 
 async def confirm_booking(
     national_id: str,
-    doctor_id: int,
-    slot_id: int,
+    doctor_id:   int,
+    slot_id:     int,
     session: AsyncSession,
 ) -> dict:
+    logger.info(f"Confirming booking - national_id: {national_id}, doctor_id: {doctor_id}, slot_id: {slot_id}")
     try:
         result = await _confirm_booking(
             national_id=national_id,
@@ -105,13 +99,18 @@ async def confirm_booking(
             slot_id=slot_id,
             session=session,
         )
+        logger.info(f"Booking confirmed successfully - national_id: {national_id}, slot_id: {slot_id}")
         return {"success": True, **result}
     except ValueError as e:
+        logger.warning(f"ValueError in confirm_booking: {str(e)} - national_id: {national_id}, slot_id: {slot_id}")
         return {"error": str(e)}
+    except Exception as e:
+        logger.error(f"Unexpected error in confirm_booking: {str(e)} - national_id: {national_id}, slot_id: {slot_id}", exc_info=True)
+        return {"error": "An unexpected error occurred while confirming booking"}
 
 
 TOOL_EXECUTORS = {
-    "search_doctors": search_doctors,
-    "get_slots": get_slots,
+    "search_doctors":  search_doctors,
+    "get_slots":       get_slots,
     "confirm_booking": confirm_booking,
 }

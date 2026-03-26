@@ -73,4 +73,4 @@ async def create_all_tables():
 # =============================================
 async def close_db():
     await engine.dispose()
-    print("🔒 DB connection closed.")
+    print(" DB connection closed.")
