@@ -22,7 +22,7 @@ async def seed():
             print("Tables created")
 
             # =============================================
-            # 1. Packages (صحيح)
+            # 1. Packages
             # =============================================
             packages = [
                 Package(
@@ -55,12 +55,12 @@ async def seed():
             print(f"Added {len(packages)} packages")
 
             # =============================================
-            # 2. Customers
+            # 2. Customers (مع إضافة phone)
             # =============================================
             customers = [
-                Customer(national_id="12345678901234", name="أحمد محمد", city="القاهرة"),
-                Customer(national_id="23456789012345", name="سارة علي", city="الإسكندرية"),
-                Customer(national_id="34567890123456", name="محمد محمود", city="القاهرة"),
+                Customer(national_id="12345678901234", name="أحمد محمد", city="القاهرة", phone="01012345678"),
+                Customer(national_id="23456789012345", name="سارة علي", city="الإسكندرية", phone="01123456789"),
+                Customer(national_id="34567890123456", name="محمد محمود", city="القاهرة", phone="01234567890"),
             ]
             session.add_all(customers)
             await session.flush()

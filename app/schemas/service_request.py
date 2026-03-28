@@ -5,7 +5,7 @@ from datetime import date
 class ServiceRequestBase(BaseModel):
     service_id: int
     branch_id: int
-    appointment_id: int
+    appointment_id: Optional[int] = None   # 🆕 اختياري
 
 class ServiceRequestCreate(ServiceRequestBase):
     national_id: str

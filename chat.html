@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>لوحة التحكم - نظام الحجز الطبي</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
     <style>
         * {
             margin: 0;
@@ -16,7 +19,6 @@
             background: #f0f2f5;
         }
 
-        /* Navbar */
         .navbar {
             background: #2c3e50;
             color: white;
@@ -57,7 +59,6 @@
             border-bottom: 3px solid #3498db;
         }
 
-        /* Main Content */
         .container {
             max-width: 1400px;
             margin: 20px auto;
@@ -84,7 +85,11 @@
             padding-bottom: 5px;
         }
 
-        /* Forms */
+        h3 {
+            margin: 15px 0 10px 0;
+            color: #34495e;
+        }
+
         .form-group {
             margin-bottom: 15px;
         }
@@ -93,6 +98,7 @@
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
+            color: #2c3e50;
         }
 
         input, select, textarea {
@@ -101,6 +107,7 @@
             border: 1px solid #ddd;
             border-radius: 5px;
             font-family: inherit;
+            font-size: 1rem;
         }
 
         button {
@@ -111,20 +118,40 @@
             border-radius: 5px;
             cursor: pointer;
             transition: 0.2s;
+            font-size: 1rem;
         }
 
         button:hover {
             background: #2980b9;
         }
 
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
         .error {
             color: #e74c3c;
-            font-size: 0.9rem;
-            margin-top: 5px;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 5px;
+            margin-top: 10px;
         }
 
         .success {
             color: #27ae60;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .info {
+            color: #2980b9;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            margin-top: 10px;
         }
 
         .card-grid {
@@ -141,13 +168,22 @@
             background: #fafafa;
         }
 
-        .card h3 {
-            margin-bottom: 10px;
-            color: #2c3e50;
+        .service-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
         }
 
-        .card p {
-            margin: 5px 0;
+        .row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .row .form-group {
+            flex: 1;
         }
 
         .slot-list {
@@ -174,7 +210,6 @@
             color: white;
         }
 
-        /* Chat specific */
         .chat-messages {
             height: 400px;
             overflow-y: auto;
@@ -205,14 +240,10 @@
             align-self: flex-start;
         }
 
-        .message.error {
-            background: #ffebee;
-            color: #c62828;
-        }
-
         .typing {
             font-style: italic;
             color: #888;
+            padding: 5px;
         }
 
         .chat-input {
@@ -224,7 +255,19 @@
             flex: 1;
         }
 
-        /* Responsive */
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .quick-btn {
+            background: #ecf0f1;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+
         @media (max-width: 768px) {
             .navbar {
                 flex-direction: column;
@@ -233,12 +276,16 @@
             .nav-links {
                 justify-content: center;
             }
+            .row {
+                flex-direction: column;
+                gap: 0;
+            }
         }
     </style>
 </head>
 <body>
     <div class="navbar">
-        <div class="logo">🏥 نظام الحجز الطبي</div>
+        <div class="logo">🏥 نظام الحجز الطبي المتطور</div>
         <div class="nav-links">
             <button data-section="chat">💬 محادثة ذكية</button>
             <button data-section="booking">📅 حجز موعد</button>
@@ -251,7 +298,7 @@
     </div>
 
     <div class="container">
-        <!-- Section: Chat Assistant -->
+        <!-- Chat Section -->
         <div id="chat-section" class="section">
             <h2>المساعد الطبي الذكي</h2>
             <div class="chat-messages" id="chatMessages">
@@ -262,67 +309,123 @@
                 <input type="text" id="chatInput" placeholder="اكتب رسالتك..." autocomplete="off">
                 <button id="sendChatBtn">إرسال</button>
             </div>
-            <div class="quick-actions" style="margin-top: 10px;">
+            <div class="quick-actions">
                 <button class="quick-btn" data-msg="أريد حجز موعد">📅 حجز موعد</button>
-                <button class="quick-btn" data-msg="ما هي الخدمات المتاحة؟">🩺 خدماتي</button>
+                <button class="quick-btn" data-msg="أريد تحاليل طبية">🩸 تحاليل</button>
+                <button class="quick-btn" data-msg="أريد أشعة">📷 أشعة</button>
                 <button class="quick-btn" data-msg="عرض مميزات باقة التأمين">⭐ مميزات الباقة</button>
-                <button class="quick-btn" data-msg="رقمي القومي 12345678901234">🆔 تجربة</button>
             </div>
         </div>
 
-        <!-- Section: Booking -->
+        <!-- Booking Section -->
         <div id="booking-section" class="section">
-            <h2>حجز موعد</h2>
-            <div id="bookingStep1">
-                <div class="form-group">
-                    <label>الرقم القومي (14 رقم)</label>
-                    <input type="text" id="bookingNationalId" placeholder="أدخل الرقم القومي">
-                </div>
-                <div class="form-group">
-                    <label>وصف الأعراض</label>
-                    <textarea id="bookingSymptom" rows="3" placeholder="مثال: صداع شديد، ألم في الصدر..."></textarea>
-                </div>
-                <button id="searchDoctorsBtn">🔍 البحث عن أطباء</button>
+            <h2>حجز موعد مع دكتور</h2>
+            <div class="form-group">
+                <label>الرقم القومي (14 رقم)</label>
+                <input type="text" id="bookingNationalId" placeholder="أدخل الرقم القومي">
             </div>
+            <div class="form-group">
+                <label>وصف الأعراض</label>
+                <textarea id="bookingSymptom" rows="3" placeholder="مثال: صداع شديد، ألم في الصدر..."></textarea>
+            </div>
+            <button id="searchDoctorsBtn">🔍 البحث عن أطباء</button>
             <div id="bookingDoctorsResult" style="margin-top: 20px;"></div>
             <div id="bookingSlotsResult" style="margin-top: 20px;"></div>
             <div id="bookingConfirmResult" style="margin-top: 20px;"></div>
         </div>
 
-        <!-- Section: Services -->
+        <!-- Services Section -->
         <div id="services-section" class="section">
-            <h2>الخدمات الإضافية</h2>
-            <div class="form-group">
-                <label>الرقم القومي</label>
-                <input type="text" id="serviceNationalId" placeholder="أدخل الرقم القومي">
+            <h2>🩺 حجز خدمات إضافية (تحاليل / أشعة)</h2>
+            
+            <div class="service-card">
+                <h3>📝 معلومات العميل</h3>
+                <div class="row">
+                    <div class="form-group">
+                        <label>الرقم القومي *</label>
+                        <input type="text" id="serviceNationalId" placeholder="أدخل الرقم القومي" value="23456789012345">
+                    </div>
+                    <div class="form-group">
+                        <label>المدينة *</label>
+                        <input type="text" id="serviceCity" placeholder="مثال: القاهرة" value="القاهرة">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>الأعراض (اختياري - لاقتراح الخدمات المناسبة)</label>
+                    <textarea id="serviceSymptom" rows="2" placeholder="اختياري: ارتفاع السكر، آلام المفاصل، صداع..."></textarea>
+                </div>
             </div>
-            <div class="form-group">
-                <label>المدينة</label>
-                <input type="text" id="serviceCity" placeholder="مثال: القاهرة">
+
+            <div class="service-card">
+                <h3>🔍 اختيار الخدمة</h3>
+                <div class="row">
+                    <div class="form-group">
+                        <label>نوع الخدمة *</label>
+                        <select id="serviceTypeSelect">
+                            <option value="">-- اختر نوع الخدمة --</option>
+                            <option value="lab_test">🧪 تحاليل طبية</option>
+                            <option value="radiology">📷 أشعة</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>نوع التحليل/الأشعة *</label>
+                        <select id="serviceSelect" disabled>
+                            <option value="">-- اختر نوع الخدمة أولاً --</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label>الأعراض (لاقتراح الخدمات)</label>
-                <textarea id="serviceSymptom" rows="3" placeholder="مثال: سكر، ضغط، صداع..."></textarea>
+
+            <div class="service-card" id="branchSection" style="display: none;">
+                <h3>🏢 اختيار الفرع</h3>
+                <div class="form-group">
+                    <label>الفرع المتاح *</label>
+                    <select id="branchSelect">
+                        <option value="">-- اختر الفرع --</option>
+                    </select>
+                </div>
             </div>
-            <button id="getAvailableServicesBtn">🔍 عرض الخدمات المتاحة</button>
-            <div id="servicesResult" style="margin-top: 20px;"></div>
+
+            <div class="service-card" id="appointmentSection" style="display: none;">
+                <h3>📅 اختيار الموعد</h3>
+                <div class="form-group">
+                    <label>التاريخ المطلوب *</label>
+                    <input type="text" id="appointmentDate" placeholder="اختر التاريخ">
+                </div>
+                <div class="form-group" id="timeSlotGroup" style="display: none;">
+                    <label>الوقت المتاح *</label>
+                    <select id="timeSlotSelect">
+                        <option value="">-- اختر الوقت --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>رقم الحجز الطبي الأساسي (اختياري)</label>
+                    <input type="text" id="appointmentId" placeholder="اختياري - إذا كان لديك حجز سابق">
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button id="checkAvailabilityBtn" disabled>✅ التحقق من التوفر وحجز الخدمة</button>
+                <button id="resetServiceBtn" style="background: #95a5a6;">🔄 إعادة تعيين</button>
+            </div>
+            
             <div id="serviceRequestResult" style="margin-top: 20px;"></div>
         </div>
 
-        <!-- Section: My Appointments -->
+        <!-- Appointments Section -->
         <div id="appointments-section" class="section">
-            <h2>مواعيدي</h2>
+            <h2>📋 مواعيدي</h2>
             <div class="form-group">
                 <label>الرقم القومي</label>
                 <input type="text" id="appointmentNationalId" placeholder="أدخل الرقم القومي">
-                <button id="loadAppointmentsBtn" style="margin-top: 10px;">📋 عرض المواعيد</button>
             </div>
-            <div id="appointmentsList"></div>
+            <button id="loadAppointmentsBtn">🔄 تحميل المواعيد</button>
+            <div id="appointmentsList" style="margin-top: 20px;"></div>
         </div>
 
-        <!-- Section: Doctors -->
+        <!-- Doctors Section -->
         <div id="doctors-section" class="section">
-            <h2>قائمة الأطباء</h2>
+            <h2>👨‍⚕️ قائمة الأطباء</h2>
             <div class="form-group">
                 <label>فلترة حسب المدينة (اختياري)</label>
                 <input type="text" id="filterCity" placeholder="المدينة">
@@ -331,15 +434,15 @@
             <div id="doctorsList" class="card-grid"></div>
         </div>
 
-        <!-- Section: Branches -->
+        <!-- Branches Section -->
         <div id="branches-section" class="section">
-            <h2>الفروع</h2>
+            <h2>🏢 الفروع</h2>
             <div id="branchesList" class="card-grid"></div>
         </div>
 
-        <!-- Section: Package Benefits -->
+        <!-- Package Benefits Section -->
         <div id="package-section" class="section">
-            <h2>مميزات باقة التأمين</h2>
+            <h2>⭐ مميزات باقة التأمين</h2>
             <div class="form-group">
                 <label>الرقم القومي</label>
                 <input type="text" id="packageNationalId" placeholder="أدخل الرقم القومي">
@@ -352,21 +455,11 @@
     <script>
         const API_BASE = 'http://localhost:8000';
         let chatSessionId = localStorage.getItem('chat_session_id') || null;
+        let selectedServiceId = null;
+        let selectedBranchId = null;
+        let flatpickrInstance = null;
 
-        // Navigation
-        document.querySelectorAll('[data-section]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const sectionId = btn.getAttribute('data-section') + '-section';
-                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-                document.getElementById(sectionId).classList.add('active');
-                document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
-        // Activate default section
-        document.querySelector('[data-section="chat"]').click();
-
-        // ---------- Helper Functions ----------
+        // Helper Functions
         async function apiCall(endpoint, method = 'GET', body = null) {
             const options = {
                 method,
@@ -381,11 +474,19 @@
             return await response.json();
         }
 
-        function displayMessage(container, html, isError = false) {
-            container.innerHTML = html;
-        }
+        // Navigation
+        document.querySelectorAll('[data-section]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const sectionId = btn.getAttribute('data-section') + '-section';
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(sectionId).classList.add('active');
+                document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+        document.querySelector('[data-section="chat"]').click();
 
-        // ---------- Chat ----------
+        // Chat Functions
         const chatMessages = document.getElementById('chatMessages');
         const chatInput = document.getElementById('chatInput');
         const sendChatBtn = document.getElementById('sendChatBtn');
@@ -425,32 +526,384 @@
             btn.addEventListener('click', () => sendChatMessage(btn.getAttribute('data-msg')));
         });
 
-        // ---------- Booking ----------
+        // Services Section
+        const serviceNationalId = document.getElementById('serviceNationalId');
+        const serviceCity = document.getElementById('serviceCity');
+        const serviceSymptom = document.getElementById('serviceSymptom');
+        const serviceTypeSelect = document.getElementById('serviceTypeSelect');
+        const serviceSelect = document.getElementById('serviceSelect');
+        const branchSelect = document.getElementById('branchSelect');
+        const branchSection = document.getElementById('branchSection');
+        const appointmentSection = document.getElementById('appointmentSection');
+        const appointmentDate = document.getElementById('appointmentDate');
+        const timeSlotGroup = document.getElementById('timeSlotGroup');
+        const timeSlotSelect = document.getElementById('timeSlotSelect');
+        const appointmentId = document.getElementById('appointmentId');
+        const checkAvailabilityBtn = document.getElementById('checkAvailabilityBtn');
+        const resetServiceBtn = document.getElementById('resetServiceBtn');
+        const serviceRequestResult = document.getElementById('serviceRequestResult');
+
+        serviceTypeSelect.addEventListener('change', async () => {
+            const serviceType = serviceTypeSelect.value;
+            if (!serviceType) {
+                serviceSelect.innerHTML = '<option value="">-- اختر نوع الخدمة أولاً --</option>';
+                serviceSelect.disabled = true;
+                branchSection.style.display = 'none';
+                appointmentSection.style.display = 'none';
+                checkAvailabilityBtn.disabled = true;
+                return;
+            }
+
+            const nationalId = serviceNationalId.value.trim();
+            const city = serviceCity.value.trim();
+            const symptom = serviceSymptom.value.trim();
+
+            if (!nationalId || !city) {
+                serviceRequestResult.innerHTML = '<div class="error">⚠️ الرجاء إدخال الرقم القومي والمدينة</div>';
+                serviceSelect.innerHTML = '<option value="">-- أكمل بيانات العميل أولاً --</option>';
+                serviceSelect.disabled = true;
+                return;
+            }
+
+            serviceSelect.innerHTML = '<option value="">جاري تحميل الخدمات...</option>';
+            serviceSelect.disabled = true;
+
+            try {
+                let url = `/services/available?city=${encodeURIComponent(city)}&national_id=${encodeURIComponent(nationalId)}&service_type=${serviceType}`;
+                if (symptom) {
+                    url += `&symptom=${encodeURIComponent(symptom)}`;
+                }
+                
+                const data = await apiCall(url, 'GET');
+                
+                if (!data.available_branches || data.available_branches.length === 0) {
+                    throw new Error('لا توجد خدمات متاحة من هذا النوع في هذه المدينة');
+                }
+                
+                const servicesMap = new Map();
+                data.available_branches.forEach(branch => {
+                    branch.services.forEach(service => {
+                        if (!servicesMap.has(service.service_id)) {
+                            servicesMap.set(service.service_id, {
+                                id: service.service_id,
+                                name: service.name,
+                                type: service.service_type,
+                                base_price: service.base_price
+                            });
+                        }
+                    });
+                });
+                
+                if (servicesMap.size === 0) {
+                    throw new Error('لا توجد خدمات متاحة');
+                }
+                
+                serviceSelect.innerHTML = '<option value="">-- اختر الخدمة المطلوبة --</option>';
+                for (const [id, service] of servicesMap) {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = `${service.name} - ${service.base_price} جنيه`;
+                    serviceSelect.appendChild(option);
+                }
+                serviceSelect.disabled = false;
+                serviceRequestResult.innerHTML = `<div class="info">✅ تم العثور على ${servicesMap.size} خدمة متاحة</div>`;
+                
+            } catch (error) {
+                serviceRequestResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+                serviceSelect.innerHTML = '<option value="">-- لا توجد خدمات متاحة --</option>';
+                serviceSelect.disabled = true;
+            }
+        });
+
+        serviceSelect.addEventListener('change', async () => {
+            const serviceId = serviceSelect.value;
+            if (!serviceId) {
+                branchSection.style.display = 'none';
+                appointmentSection.style.display = 'none';
+                checkAvailabilityBtn.disabled = true;
+                return;
+            }
+            
+            selectedServiceId = parseInt(serviceId);
+            const nationalId = serviceNationalId.value.trim();
+            const city = serviceCity.value.trim();
+            const symptom = serviceSymptom.value.trim();
+            const serviceType = serviceTypeSelect.value;
+            
+            branchSelect.innerHTML = '<option value="">جاري تحميل الفروع...</option>';
+            branchSelect.disabled = true;
+            branchSection.style.display = 'block';
+            
+            try {
+                let url = `/services/available?city=${encodeURIComponent(city)}&national_id=${encodeURIComponent(nationalId)}&service_type=${serviceType}`;
+                if (symptom) {
+                    url += `&symptom=${encodeURIComponent(symptom)}`;
+                }
+                const data = await apiCall(url, 'GET');
+                
+                const availableBranches = [];
+                data.available_branches.forEach(branch => {
+                    const hasService = branch.services.some(s => s.service_id === selectedServiceId);
+                    if (hasService) {
+                        availableBranches.push({
+                            id: branch.branch_id,
+                            name: branch.branch_name,
+                            address: branch.address
+                        });
+                    }
+                });
+                
+                if (availableBranches.length === 0) {
+                    throw new Error('لا توجد فروع تقدم هذه الخدمة');
+                }
+                
+                branchSelect.innerHTML = '<option value="">-- اختر الفرع --</option>';
+                availableBranches.forEach(branch => {
+                    const option = document.createElement('option');
+                    option.value = branch.id;
+                    option.textContent = `${branch.name} - ${branch.address}`;
+                    branchSelect.appendChild(option);
+                });
+                branchSelect.disabled = false;
+                
+            } catch (error) {
+                serviceRequestResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+                branchSection.style.display = 'none';
+            }
+        });
+        
+        branchSelect.addEventListener('change', async () => {
+            const branchId = branchSelect.value;
+            if (!branchId) {
+                appointmentSection.style.display = 'none';
+                checkAvailabilityBtn.disabled = true;
+                return;
+            }
+            
+            selectedBranchId = parseInt(branchId);
+            appointmentSection.style.display = 'block';
+            
+            if (flatpickrInstance) {
+                flatpickrInstance.destroy();
+            }
+            
+            flatpickrInstance = flatpickr(appointmentDate, {
+                locale: 'ar',
+                dateFormat: 'Y-m-d',
+                minDate: 'today',
+                maxDate: new Date().fp_incr(30),
+                onChange: async function(selectedDates, dateStr) {
+                    if (dateStr) {
+                        timeSlotGroup.style.display = 'block';
+                        timeSlotSelect.innerHTML = '<option value="">جاري تحميل المواعيد...</option>';
+                        timeSlotSelect.disabled = true;
+                        
+                        // Simulate loading available time slots
+                        setTimeout(() => {
+                            const availableTimes = ['09:00:00', '10:00:00', '11:00:00', '12:00:00', '14:00:00', '15:00:00', '16:00:00'];
+                            timeSlotSelect.innerHTML = '<option value="">-- اختر الوقت --</option>';
+                            availableTimes.forEach(time => {
+                                const option = document.createElement('option');
+                                option.value = time;
+                                option.textContent = time;
+                                timeSlotSelect.appendChild(option);
+                            });
+                            timeSlotSelect.disabled = false;
+                            checkAvailabilityBtn.disabled = false;
+                        }, 500);
+                    }
+                }
+            });
+        });
+        
+        checkAvailabilityBtn.addEventListener('click', async () => {
+            const nationalId = serviceNationalId.value.trim();
+            const selectedTime = timeSlotSelect.value;
+            const selectedDate = appointmentDate.value;
+            const appointmentIdValue = appointmentId.value.trim();
+            
+            if (!nationalId || !selectedServiceId || !selectedBranchId || !selectedDate || !selectedTime) {
+                serviceRequestResult.innerHTML = '<div class="error">⚠️ الرجاء إكمال جميع البيانات المطلوبة</div>';
+                return;
+            }
+            
+            serviceRequestResult.innerHTML = '<div class="typing">جاري التحقق من التوفر وحجز الخدمة...</div>';
+            checkAvailabilityBtn.disabled = true;
+            
+            try {
+                const check = await apiCall('/services/check-availability', 'POST', {
+                    service_id: selectedServiceId,
+                    branch_id: selectedBranchId,
+                    requested_date: selectedDate,
+                    requested_time: selectedTime
+                });
+                
+                if (!check.available) {
+                    serviceRequestResult.innerHTML = `<div class="error">❌ ${check.message || 'الموعد غير متاح'}</div>`;
+                    checkAvailabilityBtn.disabled = false;
+                    return;
+                }
+                
+                const slotId = check.slot_id;
+                
+                // Send null if appointmentId is empty
+                const requestBody = {
+                    national_id: nationalId,
+                    service_id: selectedServiceId,
+                    branch_id: selectedBranchId,
+                    slot_id: slotId,
+                    appointment_id: appointmentIdValue ? parseInt(appointmentIdValue) : null
+                };
+                
+                const requestData = await apiCall('/services/request', 'POST', requestBody);
+                
+                serviceRequestResult.innerHTML = `
+                    <div class="success">
+                        ✅ <strong>تم حجز الخدمة بنجاح!</strong><br><br>
+                        📋 رقم الطلب: ${requestData.request_id}<br>
+                        🩺 الخدمة: ${requestData.service_name}<br>
+                        💰 التكلفة الإجمالية: ${requestData.total_cost} جنيه<br>
+                        💵 قيمة المشاركة: ${requestData.co_payment_amount} جنيه<br>
+                        📊 الحالة: ${requestData.status === 'pending' ? 'قيد المراجعة' : requestData.status}<br>
+                        📅 الموعد: ${selectedDate} ${selectedTime}<br><br>
+                        ⏳ سيتم التواصل معك قريباً لتأكيد الطلب.
+                    </div>
+                `;
+                
+                setTimeout(() => resetServiceForm(), 3000);
+                
+            } catch (error) {
+                serviceRequestResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+                checkAvailabilityBtn.disabled = false;
+            }
+        });
+        
+        function resetServiceForm() {
+            serviceTypeSelect.value = '';
+            serviceSelect.innerHTML = '<option value="">-- اختر نوع الخدمة أولاً --</option>';
+            serviceSelect.disabled = true;
+            branchSelect.innerHTML = '<option value="">-- اختر الفرع --</option>';
+            branchSection.style.display = 'none';
+            appointmentSection.style.display = 'none';
+            appointmentDate.value = '';
+            timeSlotSelect.innerHTML = '<option value="">-- اختر الوقت --</option>';
+            timeSlotGroup.style.display = 'none';
+            checkAvailabilityBtn.disabled = true;
+            selectedServiceId = null;
+            selectedBranchId = null;
+            if (flatpickrInstance) {
+                flatpickrInstance.destroy();
+                flatpickrInstance = null;
+            }
+            serviceRequestResult.innerHTML = '';
+        }
+        
+        resetServiceBtn.addEventListener('click', resetServiceForm);
+
+        // Appointments Section script
+        const appointmentNationalId = document.getElementById('appointmentNationalId');
+        const appointmentsList = document.getElementById('appointmentsList');
+
+        document.getElementById('loadAppointmentsBtn').addEventListener('click', async () => {
+            const nationalId = appointmentNationalId.value.trim();
+            if (!nationalId) {
+                appointmentsList.innerHTML = '<div class="error">⚠️ الرجاء إدخال الرقم القومي</div>';
+                return;
+            }
+
+            try {
+                const data = await apiCall(`/appointments/customer/${nationalId}`, 'GET');
+                let html = `<h3>📋 مواعيد وخدمات ${data.customer_name || nationalId}</h3>`;
+
+                if (!data.appointments || data.appointments.length === 0) {
+                    html += '<p>لا توجد مواعيد أو خدمات مسجلة.</p>';
+                } else {
+                    html += '<div class="card-grid">';
+                    data.appointments.forEach(item => {
+                        if (item.type === 'appointment') {
+                            const statusText = item.status === 'pending' ? '⏳ قيد الانتظار' :
+                                              item.status === 'confirmed' ? '✅ مؤكد' :
+                                              item.status === 'completed' ? '✔️ مكتمل' : '❌ ملغي';
+                            html += `<div class="card">
+                                <h3>📋 حجز دكتور رقم: ${item.id}</h3>
+                                <p>👨‍⚕️ الدكتور: ${item.doctor_name || 'غير محدد'}</p>
+                                <p>📅 التاريخ: ${item.appointment_date || 'غير محدد'}</p>
+                                <p>🕒 الوقت: ${item.appointment_time || 'غير محدد'}</p>
+                                <p>📊 الحالة: ${statusText}</p>
+                                ${item.status !== 'completed' && item.status !== 'cancelled' ?
+                                    `<button class="cancelAppointmentBtn" data-id="${item.id}">❌ إلغاء الحجز</button>` : ''}
+                            </div>`;
+                        } else {
+                            const statusText = item.status === 'pending' ? '⏳ قيد المراجعة' :
+                                              item.status === 'approved' ? '✅ موافق عليه' :
+                                              item.status === 'rejected' ? '❌ مرفوض' :
+                                              item.status === 'completed' ? '✔️ منجز' : '❌ ملغي';
+                            html += `<div class="card">
+                                <h3>🩺 طلب خدمة رقم: ${item.id}</h3>
+                                <p>🏷️ الخدمة: ${item.service_name || 'غير محدد'}</p>
+                                <p>🏢 الفرع: ${item.branch_name || 'غير محدد'}</p>
+                                <p>📅 تاريخ الطلب: ${item.appointment_date || 'غير محدد'}</p>
+                                <p>📊 الحالة: ${statusText}</p>
+                            </div>`;
+                        }
+                    });
+                    html += '</div>';
+                }
+
+                appointmentsList.innerHTML = html;
+
+                // إعادة ربط أزرار الإلغاء للحجوزات فقط
+                document.querySelectorAll('.cancelAppointmentBtn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const appId = parseInt(btn.getAttribute('data-id'));
+                        if (!Number.isFinite(appId)) return;
+
+                        if (confirm('هل أنت متأكد من إلغاء هذا الحجز؟')) {
+                            try {
+                                const response = await fetch(`${API_BASE}/appointments/${appId}`, { method: 'DELETE' });
+                                if (!response.ok) {
+                                    const msg = await response.text();
+                                    throw new Error(msg || 'حدث خطأ أثناء إلغاء الحجز');
+                                }
+                                alert('✅ تم إلغاء الحجز بنجاح');
+                                document.getElementById('loadAppointmentsBtn').click();
+                            } catch (error) {
+                                alert('❌ فشل الإلغاء: ' + (error.message || 'خطأ غير معروف'));
+                            }
+                        }
+                    });
+                });
+            } catch (error) {
+                appointmentsList.innerHTML = `<div class="error">❌ ${error.message || 'فشل في تحميل المواعيد'}</div>`;
+            }
+        });
+
+        // Booking Section
         const bookingNationalId = document.getElementById('bookingNationalId');
         const bookingSymptom = document.getElementById('bookingSymptom');
         const bookingDoctorsResult = document.getElementById('bookingDoctorsResult');
         const bookingSlotsResult = document.getElementById('bookingSlotsResult');
         const bookingConfirmResult = document.getElementById('bookingConfirmResult');
-
+        
         let selectedDoctor = null;
-        let selectedSlot = null;
-
+        let selectedDoctorSlot = null;
+        
         document.getElementById('searchDoctorsBtn').addEventListener('click', async () => {
             const nationalId = bookingNationalId.value.trim();
             const symptom = bookingSymptom.value.trim();
             if (!nationalId || !symptom) {
-                bookingDoctorsResult.innerHTML = '<div class="error">الرجاء إدخال الرقم القومي والأعراض</div>';
+                bookingDoctorsResult.innerHTML = '<div class="error">⚠️ الرجاء إدخال الرقم القومي والأعراض</div>';
                 return;
             }
             try {
                 const data = await apiCall('/booking/search', 'POST', { national_id: nationalId, symptom });
-                let html = `<h3>الأطباء المتاحون في شبكتك (${data.specialization})</h3><div class="card-grid">`;
+                let html = `<h3>👨‍⚕️ الأطباء المتاحون في شبكتك (${data.specialization})</h3><div class="card-grid">`;
                 data.doctors.forEach(doc => {
                     html += `<div class="card" data-doctor-id="${doc.id}" data-doctor-name="${doc.name}" data-doctor-specialization="${doc.specialization}">
-                        <h3>${doc.name}</h3>
-                        <p>التخصص: ${doc.specialization}</p>
-                        <p>المدينة: ${doc.city}</p>
-                        <button class="selectDoctorBtn">اختيار</button>
+                        <h3>👨‍⚕️ ${doc.name}</h3>
+                        <p>🔬 التخصص: ${doc.specialization}</p>
+                        <p>📍 المدينة: ${doc.city}</p>
+                        <button class="selectDoctorBtn">✅ اختيار</button>
                     </div>`;
                 });
                 html += '</div>';
@@ -463,31 +916,31 @@
                             name: card.getAttribute('data-doctor-name'),
                             specialization: card.getAttribute('data-doctor-specialization')
                         };
-                        bookingDoctorsResult.innerHTML += `<p>تم اختيار الدكتور: ${selectedDoctor.name}</p>`;
-                        loadSlots(selectedDoctor.id);
+                        bookingDoctorsResult.innerHTML += `<p class="success">✅ تم اختيار الدكتور: ${selectedDoctor.name}</p>`;
+                        loadDoctorSlots(selectedDoctor.id);
                     });
                 });
             } catch (error) {
-                bookingDoctorsResult.innerHTML = `<div class="error">${error.message}</div>`;
+                bookingDoctorsResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
             }
         });
-
-        async function loadSlots(doctorId) {
+        
+        async function loadDoctorSlots(doctorId) {
             try {
                 const data = await apiCall(`/slots/${doctorId}`, 'GET');
-                let html = `<h3>مواعيد متاحة للدكتور ${data.doctor_name}</h3><div class="slot-list">`;
+                let html = `<h3>📅 مواعيد متاحة للدكتور ${data.doctor_name}</h3><div class="slot-list">`;
                 data.available_slots.forEach(slot => {
                     html += `<div class="slot-item" data-slot-id="${slot.id}" data-slot-date="${slot.slot_date}" data-slot-time="${slot.slot_time}">
                         📅 ${slot.slot_date} | 🕒 ${slot.slot_time}
                     </div>`;
                 });
-                html += '</div><button id="confirmBookingBtn">تأكيد الحجز</button>';
+                html += '</div><button id="confirmBookingBtn" style="margin-top: 15px;">✅ تأكيد الحجز</button>';
                 bookingSlotsResult.innerHTML = html;
                 document.querySelectorAll('.slot-item').forEach(el => {
                     el.addEventListener('click', () => {
                         document.querySelectorAll('.slot-item').forEach(s => s.classList.remove('selected'));
                         el.classList.add('selected');
-                        selectedSlot = {
+                        selectedDoctorSlot = {
                             id: parseInt(el.getAttribute('data-slot-id')),
                             date: el.getAttribute('data-slot-date'),
                             time: el.getAttribute('data-slot-time')
@@ -495,149 +948,30 @@
                     });
                 });
                 document.getElementById('confirmBookingBtn').addEventListener('click', async () => {
-                    if (!selectedSlot) {
-                        alert('الرجاء اختيار موعد');
+                    if (!selectedDoctorSlot) {
+                        alert('⚠️ الرجاء اختيار موعد');
                         return;
                     }
                     try {
                         const confirmData = await apiCall('/booking/confirm', 'POST', {
                             national_id: bookingNationalId.value.trim(),
                             doctor_id: selectedDoctor.id,
-                            slot_id: selectedSlot.id
+                            slot_id: selectedDoctorSlot.id
                         });
-                        bookingConfirmResult.innerHTML = `<div class="success">✅ تم الحجز بنجاح! رقم الحجز: ${confirmData.appointment_id}</div>`;
+                        bookingConfirmResult.innerHTML = `<div class="success">✅ تم الحجز بنجاح!<br>📋 رقم الحجز: ${confirmData.appointment_id}<br>👨‍⚕️ الدكتور: ${confirmData.doctor_name}<br>📅 الموعد: ${confirmData.appointment_date} ${confirmData.appointment_time}</div>`;
                     } catch (error) {
-                        bookingConfirmResult.innerHTML = `<div class="error">${error.message}</div>`;
+                        bookingConfirmResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
                     }
                 });
             } catch (error) {
-                bookingSlotsResult.innerHTML = `<div class="error">${error.message}</div>`;
+                bookingSlotsResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
             }
         }
 
-        // ---------- Services ----------
-        const serviceNationalId = document.getElementById('serviceNationalId');
-        const serviceCity = document.getElementById('serviceCity');
-        const serviceSymptom = document.getElementById('serviceSymptom');
-        const servicesResult = document.getElementById('servicesResult');
-        const serviceRequestResult = document.getElementById('serviceRequestResult');
-
-        document.getElementById('getAvailableServicesBtn').addEventListener('click', async () => {
-            const nationalId = serviceNationalId.value.trim();
-            const city = serviceCity.value.trim();
-            const symptom = serviceSymptom.value.trim();
-            if (!nationalId || !city || !symptom) {
-                servicesResult.innerHTML = '<div class="error">الرجاء ملء جميع الحقول</div>';
-                return;
-            }
-            try {
-                const data = await apiCall(`/services/available?symptom=${encodeURIComponent(symptom)}&city=${encodeURIComponent(city)}&package_id=1`, 'GET');
-                // Since we need package_id, we could first get package via customer, but for demo use package 1.
-                // Better: first get customer's package via /booking/search? Actually we can call /booking/search to get package? Not directly.
-                // For simplicity, assume package_id=1.
-                let html = '<h3>الخدمات المتاحة حسب الأعراض والموقع</h3>';
-                if (data.available_branches && data.available_branches.length) {
-                    data.available_branches.forEach(branch => {
-                        html += `<div class="card"><h3>${branch.branch_name}</h3><p>العنوان: ${branch.address}</p><h4>الخدمات:</h4><ul>`;
-                        branch.services.forEach(service => {
-                            html += `<li>${service.name} (${service.service_type}) - ${service.base_price} جنيه
-                                    <button class="requestServiceBtn" data-service-id="${service.service_id}" data-branch-id="${branch.branch_id}">طلب هذه الخدمة</button></li>`;
-                        });
-                        html += `</ul></div>`;
-                    });
-                } else {
-                    html += '<p>لا توجد خدمات متاحة حالياً.</p>';
-                }
-                servicesResult.innerHTML = html;
-                document.querySelectorAll('.requestServiceBtn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const serviceId = parseInt(btn.getAttribute('data-service-id'));
-                        const branchId = parseInt(btn.getAttribute('data-branch-id'));
-                        // Need slot_id and appointment_id. For demo, we'll need to ask user for date/time and appointment ID.
-                        // We'll prompt for date/time and use a dummy appointment_id (if not known).
-                        const requestedDate = prompt('أدخل التاريخ المطلوب (YYYY-MM-DD):');
-                        const requestedTime = prompt('أدخل الوقت المطلوب (HH:MM:SS):');
-                        if (!requestedDate || !requestedTime) return;
-                        // Check availability
-                        const check = await apiCall('/services/check-availability', 'POST', {
-                            service_id: serviceId,
-                            branch_id: branchId,
-                            requested_date: requestedDate,
-                            requested_time: requestedTime
-                        });
-                        if (!check.available) {
-                            serviceRequestResult.innerHTML = `<div class="error">${check.message}</div>`;
-                            return;
-                        }
-                        const slotId = check.slot_id;
-                        const appointmentId = prompt('أدخل رقم الحجز الطبي الأساسي (إن وجد):');
-                        if (!appointmentId) return;
-                        const requestData = await apiCall('/services/request', 'POST', {
-                            national_id: nationalId,
-                            service_id: serviceId,
-                            branch_id: branchId,
-                            slot_id: slotId,
-                            appointment_id: parseInt(appointmentId)
-                        });
-                        serviceRequestResult.innerHTML = `<div class="success">✅ تم طلب الخدمة بنجاح. رقم الطلب: ${requestData.request_id}</div>`;
-                    });
-                });
-            } catch (error) {
-                servicesResult.innerHTML = `<div class="error">${error.message}</div>`;
-            }
-        });
-
-        // ---------- Appointments ----------
-        const appointmentNationalId = document.getElementById('appointmentNationalId');
-        const appointmentsList = document.getElementById('appointmentsList');
-        document.getElementById('loadAppointmentsBtn').addEventListener('click', async () => {
-            const nationalId = appointmentNationalId.value.trim();
-            if (!nationalId) {
-                appointmentsList.innerHTML = '<div class="error">الرجاء إدخال الرقم القومي</div>';
-                return;
-            }
-            try {
-                const data = await apiCall(`/appointments/customer/${nationalId}`, 'GET');
-                let html = `<h3>مواعيد ${data.customer_name}</h3>`;
-                if (data.appointments.length === 0) {
-                    html += '<p>لا توجد مواعيد.</p>';
-                } else {
-                    html += `<div class="card-grid">`;
-                    data.appointments.forEach(app => {
-                        html += `<div class="card">
-                            <h3>رقم الحجز: ${app.id}</h3>
-                            <p>الدكتور: ${app.doctor_name}</p>
-                            <p>التاريخ: ${app.appointment_date}</p>
-                            <p>الوقت: ${app.appointment_time || 'غير محدد'}</p>
-                            <p>الحالة: ${app.status}</p>
-                            ${app.status !== 'completed' ? `<button class="cancelAppointmentBtn" data-id="${app.id}">إلغاء الحجز</button>` : ''}
-                        </div>`;
-                    });
-                    html += `</div>`;
-                }
-                appointmentsList.innerHTML = html;
-                document.querySelectorAll('.cancelAppointmentBtn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const appId = parseInt(btn.getAttribute('data-id'));
-                        if (confirm('هل أنت متأكد من إلغاء هذا الحجز؟')) {
-                            try {
-                                await fetch(`${API_BASE}/appointments/${appId}`, { method: 'DELETE' });
-                                alert('تم إلغاء الحجز بنجاح');
-                                document.getElementById('loadAppointmentsBtn').click(); // reload
-                            } catch (error) {
-                                alert('فشل الإلغاء: ' + error.message);
-                            }
-                        }
-                    });
-                });
-            } catch (error) {
-                appointmentsList.innerHTML = `<div class="error">${error.message}</div>`;
-            }
-        });
-
-        // ---------- Doctors ----------
+        // Doctors Section
         const filterCity = document.getElementById('filterCity');
         const doctorsList = document.getElementById('doctorsList');
+        
         async function loadDoctors(city = '') {
             try {
                 let url = '/doctors';
@@ -645,64 +979,82 @@
                 const data = await apiCall(url, 'GET');
                 let html = '';
                 data.forEach(doc => {
-                    html += `<div class="card"><h3>${doc.name}</h3><p>التخصص: ${doc.specialization}</p><p>المدينة: ${doc.city}</p></div>`;
+                    html += `<div class="card">
+                        <h3>👨‍⚕️ ${doc.name}</h3>
+                        <p>🔬 التخصص: ${doc.specialization}</p>
+                        <p>📍 المدينة: ${doc.city}</p>
+                    </div>`;
                 });
-                doctorsList.innerHTML = html;
+                doctorsList.innerHTML = html || '<p>لا يوجد أطباء في هذه المدينة</p>';
             } catch (error) {
-                doctorsList.innerHTML = `<div class="error">${error.message}</div>`;
+                doctorsList.innerHTML = `<div class="error">❌ ${error.message}</div>`;
             }
         }
+        
         document.getElementById('filterDoctorsBtn').addEventListener('click', () => {
             loadDoctors(filterCity.value.trim());
         });
         loadDoctors();
 
-        // ---------- Branches ----------
+        // Branches Section
         const branchesList = document.getElementById('branchesList');
+        
         async function loadBranches() {
             try {
                 const data = await apiCall('/branches', 'GET');
                 let html = '';
                 data.forEach(branch => {
-                    html += `<div class="card"><h3>${branch.name_ar}</h3><p>العنوان: ${branch.address}</p><p>الهاتف: ${branch.phone}</p></div>`;
+                    html += `<div class="card">
+                        <h3>🏢 ${branch.name_ar}</h3>
+                        <p>📍 العنوان: ${branch.address}</p>
+                        <p>📞 الهاتف: ${branch.phone}</p>
+                        <p>🏙️ المدينة: ${branch.city}</p>
+                    </div>`;
                 });
                 branchesList.innerHTML = html;
             } catch (error) {
-                branchesList.innerHTML = `<div class="error">${error.message}</div>`;
+                branchesList.innerHTML = `<div class="error">❌ ${error.message}</div>`;
             }
         }
         loadBranches();
 
-        // ---------- Package Benefits ----------
+        // Package Benefits Section
         const packageNationalId = document.getElementById('packageNationalId');
         const packageBenefitsResult = document.getElementById('packageBenefitsResult');
+        
         document.getElementById('getPackageBenefitsBtn').addEventListener('click', async () => {
             const nationalId = packageNationalId.value.trim();
             if (!nationalId) {
-                packageBenefitsResult.innerHTML = '<div class="error">الرجاء إدخال الرقم القومي</div>';
+                packageBenefitsResult.innerHTML = '<div class="error">⚠️ الرجاء إدخال الرقم القومي</div>';
                 return;
             }
             try {
-                // First get customer's package via booking/search or directly? We'll call /booking/search with dummy symptom to get package? Not ideal.
-                // Better: use the /services/package/{package_id}/benefits but we need package_id. We can get it from /booking/search but that returns doctors.
-                // For simplicity, we'll assume we have a separate endpoint to get customer's policy. But it's not exposed. So we'll use /booking/search with dummy symptom.
-                // The search returns data that includes the specialization, but not package_id. Actually search returns customer and doctors but not package.
-                // We'll call a new endpoint that returns package info? Not available. So we'll use a workaround: get customer from /customers/{national_id}? That returns customer but not package.
-                // Since we don't have a direct package info endpoint, we'll use a dummy package_id (1) for demo.
-                const data = await apiCall(`/services/package/1/benefits`, 'GET');
-                let html = `<h3>مميزات باقة التأمين</h3>
-                            <p>اسم الباقة: ${data.package_name}</p>
-                            <p>نسبة الخصم: ${data.discount_percentage * 100}%</p>
-                            <p>الحد الأقصى للتحاليل شهرياً: ${data.max_lab_tests_per_month}</p>
-                            <p>الحد الأقصى للأشعة شهرياً: ${data.max_radiology_per_month}</p>
-                            <h4>الخدمات المشمولة:</h4><ul>`;
+                const policiesData = await apiCall(`/policies/customer/${nationalId}`, 'GET');
+                if (!policiesData.policies || policiesData.policies.length === 0) {
+                    throw new Error('لا توجد بوليصة تأمين للعميل');
+                }
+                const activePolicy = policiesData.policies.find(p => p.is_active);
+                if (!activePolicy) throw new Error('لا توجد بوليصة تأمين نشطة');
+                
+                const packageId = activePolicy.package_id;
+                const data = await apiCall(`/services/package/${packageId}/benefits`, 'GET');
+                
+                let html = `<div class="card">
+                    <h3>⭐ مميزات باقة التأمين</h3>
+                    <p><strong>اسم الباقة:</strong> ${data.package_name}</p>
+                    <p><strong>نسبة الخصم:</strong> ${data.discount_percentage * 100}%</p>
+                    <p><strong>الحد الأقصى للتحاليل شهرياً:</strong> ${data.max_lab_tests_per_month}</p>
+                    <p><strong>الحد الأقصى للأشعة شهرياً:</strong> ${data.max_radiology_per_month}</p>
+                    <h4>📋 الخدمات المشمولة:</h4>
+                    <ul>`;
                 data.services.forEach(s => {
-                    html += `<li>${s.name} - نسبة المشاركة: ${s.co_payment * 100}% - الحد الشهري: ${s.max_visits_per_month}</li>`;
+                    const serviceType = s.service_type === 'lab_test' ? '🧪 تحليل' : s.service_type === 'radiology' ? '📷 أشعة' : '👨‍⚕️ استشارة';
+                    html += `<li>${s.name} (${serviceType}) - نسبة المشاركة: ${s.co_payment * 100}% - الحد الشهري: ${s.max_visits_per_month}</li>`;
                 });
-                html += `</ul>`;
+                html += `</ul></div>`;
                 packageBenefitsResult.innerHTML = html;
             } catch (error) {
-                packageBenefitsResult.innerHTML = `<div class="error">${error.message}</div>`;
+                packageBenefitsResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
             }
         });
     </script>

@@ -1,24 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from pydantic import BaseModel, field_validator, model_validator
 from datetime import date
 from typing import Optional
 from app.database import get_session
 from app.models import Policy, Customer, Package
-
-router = APIRouter(prefix="/policies", tags=["Policies"])
 from app.schemas.policies import PolicyCreate, PolicyUpdate, PolicyOut
 
-# ─────────────────────────────────────────────
-# Schemas
-# ─────────────────────────────────────────────
+router = APIRouter(prefix="/policies", tags=["Policies"])
 
-
-# ─────────────────────────────────────────────
-# GET /policies/
-# All policies
-# ─────────────────────────────────────────────
 
 @router.get("/")
 async def list_all_policies(session: AsyncSession = Depends(get_session)):
@@ -47,9 +37,6 @@ async def list_all_policies(session: AsyncSession = Depends(get_session)):
     return {"total": len(enriched), "policies": enriched}
 
 
-# ─────────────────────────────────────────────
-# GET /policies/{policy_id}
-# ─────────────────────────────────────────────
 @router.get("/{policy_id}")
 async def get_policy(
     policy_id: int,
@@ -57,7 +44,7 @@ async def get_policy(
 ):
     policy = await session.get(Policy, policy_id)
     if not policy:
-        raise HTTPException(status_code=404, detail=" البوليصة غير موجودة")
+        raise HTTPException(status_code=404, detail="البوليصة غير موجودة")
 
     today    = date.today()
     customer = await session.get(Customer, policy.customer_id)
@@ -76,10 +63,6 @@ async def get_policy(
     }
 
 
-# ─────────────────────────────────────────────
-# GET /policies/customer/{national_id}
-# All policies for a customer
-# ─────────────────────────────────────────────
 @router.get("/customer/{national_id}")
 async def get_customer_policies(
     national_id: str,
@@ -90,7 +73,7 @@ async def get_customer_policies(
     )
     customer = cust_result.scalar_one_or_none()
     if not customer:
-        raise HTTPException(status_code=404, detail=" العميل غير موجود")
+        raise HTTPException(status_code=404, detail="العميل غير موجود")
 
     result = await session.execute(
         select(Policy)
@@ -101,30 +84,32 @@ async def get_customer_policies(
 
     today = date.today()
     enriched = []
+    active_policy = None
+    
     for p in policies:
         package = await session.get(Package, p.package_id)
+        is_active = p.start_date <= today <= p.end_date
         enriched.append({
-            "id":           p.id,
-            "package_id":   p.package_id,
+            "id": p.id,
+            "package_id": p.package_id,
             "package_name": package.name if package else None,
-            "start_date":   p.start_date,
-            "end_date":     p.end_date,
-            "is_active":    p.start_date <= today <= p.end_date,
+            "start_date": p.start_date,
+            "end_date": p.end_date,
+            "is_active": is_active,
         })
+        if is_active and not active_policy:
+            active_policy = p
 
     return {
-        "customer_id":   customer.id,
+        "customer_id": customer.id,
         "customer_name": customer.name,
-        "national_id":   customer.national_id,
-        "total":         len(enriched),
-        "policies":      enriched,
+        "national_id": customer.national_id,
+        "total": len(enriched),
+        "policies": enriched,
+        "active_policy_id": active_policy.id if active_policy else None,
     }
 
 
-# ─────────────────────────────────────────────
-# POST /policies/
-# Create a new policy for a customer
-# ─────────────────────────────────────────────
 @router.post("/", status_code=201)
 async def create_policy(
     body: PolicyCreate,
@@ -136,14 +121,14 @@ async def create_policy(
     )
     customer = cust_result.scalar_one_or_none()
     if not customer:
-        raise HTTPException(status_code=404, detail=" العميل غير موجود")
+        raise HTTPException(status_code=404, detail="العميل غير موجود")
 
     # Validate package exists
     package = await session.get(Package, body.package_id)
     if not package:
-        raise HTTPException(status_code=404, detail=" الباقة غير موجودة")
+        raise HTTPException(status_code=404, detail="الباقة غير موجودة")
 
-    # Warn if there is already an active policy (don't block, just inform)
+    # Warn if there is already an active policy
     today = date.today()
     active_result = await session.execute(
         select(Policy).where(
@@ -165,7 +150,7 @@ async def create_policy(
     await session.refresh(policy)
 
     response = {
-        "message":       " تم إنشاء البوليصة بنجاح",
+        "message":       "تم إنشاء البوليصة بنجاح",
         "policy_id":     policy.id,
         "customer_name": customer.name,
         "national_id":   customer.national_id,
@@ -177,17 +162,12 @@ async def create_policy(
 
     if existing_active:
         response["warning"] = (
-            f" يوجد بوليصة نشطة بالفعل (ID: {existing_active.id}) "
+            f"يوجد بوليصة نشطة بالفعل (ID: {existing_active.id}) "
             f"تنتهي في {existing_active.end_date}"
         )
 
     return response
 
-
-# ─────────────────────────────────────────────
-# PUT /policies/{policy_id}
-# Update a policy's dates or package
-# ─────────────────────────────────────────────
 
 @router.put("/{policy_id}")
 async def update_policy(
@@ -197,12 +177,12 @@ async def update_policy(
 ):
     policy = await session.get(Policy, policy_id)
     if not policy:
-        raise HTTPException(status_code=404, detail=" البوليصة غير موجودة")
+        raise HTTPException(status_code=404, detail="البوليصة غير موجودة")
 
     if body.package_id is not None:
         package = await session.get(Package, body.package_id)
         if not package:
-            raise HTTPException(status_code=404, detail=" الباقة غير موجودة")
+            raise HTTPException(status_code=404, detail="الباقة غير موجودة")
         policy.package_id = body.package_id
 
     if body.start_date is not None: policy.start_date = body.start_date
@@ -211,7 +191,7 @@ async def update_policy(
     if policy.end_date <= policy.start_date:
         raise HTTPException(
             status_code=400,
-            detail=" تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية",
+            detail="تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية",
         )
 
     await session.commit()
@@ -219,7 +199,7 @@ async def update_policy(
 
     today = date.today()
     return {
-        "message":    " تم تحديث البوليصة",
+        "message":    "تم تحديث البوليصة",
         "policy_id":  policy.id,
         "package_id": policy.package_id,
         "start_date": policy.start_date,
@@ -228,9 +208,6 @@ async def update_policy(
     }
 
 
-# ─────────────────────────────────────────────
-# DELETE /policies/{policy_id}
-# ─────────────────────────────────────────────
 @router.delete("/{policy_id}")
 async def delete_policy(
     policy_id: int,
@@ -238,15 +215,15 @@ async def delete_policy(
 ):
     policy = await session.get(Policy, policy_id)
     if not policy:
-        raise HTTPException(status_code=404, detail=" البوليصة غير موجودة")
+        raise HTTPException(status_code=404, detail="البوليصة غير موجودة")
 
     today = date.today()
     if policy.start_date <= today <= policy.end_date:
         raise HTTPException(
             status_code=400,
-            detail=" لا يمكن حذف بوليصة نشطة — قم بتعديل تاريخ الانتهاء أولاً",
+            detail="لا يمكن حذف بوليصة نشطة — قم بتعديل تاريخ الانتهاء أولاً",
         )
 
     await session.delete(policy)
     await session.commit()
-    return {"message": f" تم حذف البوليصة رقم {policy_id}"}
+    return {"message": f"تم حذف البوليصة رقم {policy_id}"}

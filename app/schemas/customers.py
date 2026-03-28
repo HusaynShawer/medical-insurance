@@ -1,14 +1,11 @@
-# ─────────────────────────────────────────────
-# Schemas
-# ─────────────────────────────────────────────
 from typing import Optional
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, field_validator
 
 class CustomerCreate(BaseModel):
     national_id: str
     name:        str
-    phone:       Optional[str] = None
     city:        str
+    phone:       Optional[str] = None   
 
     @field_validator("national_id")
     @classmethod
@@ -29,16 +26,16 @@ class CustomerCreate(BaseModel):
 
 class CustomerUpdate(BaseModel):
     name:  Optional[str] = None
-    phone: Optional[str] = None
     city:  Optional[str] = None
+    phone: Optional[str] = None   
 
 
 class CustomerOut(BaseModel):
     id:          int
     national_id: str
     name:        str
-    phone:       Optional[str] = None
     city:        str
+    phone:       Optional[str] = None  
 
     class Config:
         from_attributes = True

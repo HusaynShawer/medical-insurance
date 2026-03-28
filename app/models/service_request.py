@@ -17,7 +17,7 @@ class ServiceRequest(Base):
     service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
     branch_id = Column(Integer, ForeignKey("branches.id"), nullable=False)
     doctor_id = Column(Integer, ForeignKey("doctors.id"), nullable=True)
-    appointment_id = Column(Integer, ForeignKey("appointments.id"), nullable=True)
+    appointment_id = Column(Integer, ForeignKey("appointments.id"), nullable=True)   # مهم: nullable=True
     request_date = Column(Date, nullable=False)
     status = Column(Enum(RequestStatus), nullable=False, default=RequestStatus.PENDING)
     notes = Column(Text)

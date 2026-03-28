@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from pydantic import BaseModel
 from typing import Optional
 from app.database import get_session
-from app.models import Appointment, DoctorSlot, Customer, Doctor
+from app.models import (
+    Appointment, DoctorSlot, Customer, Doctor,
+    ServiceRequest, Service, Branch
+)
 from app.services.status_service import (
     update_appointment_status,
     get_appointment,
@@ -15,10 +17,6 @@ from app.schemas.appointments import StatusUpdate, AppointmentOut
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
 
 
-# ─────────────────────────────────────────────
-# GET /appointments/
-# List all with optional status filter
-# ─────────────────────────────────────────────
 @router.get("/")
 async def list_appointments(
     status: Optional[str] = Query(None, description="Filter by status: pending | confirmed | completed | cancelled"),
@@ -34,8 +32,6 @@ async def list_appointments(
     for a in appointments:
         customer = await session.get(Customer, a.customer_id)
         doctor   = await session.get(Doctor, a.doctor_id)
-
-        # Get slot time using slot_id
         slot = await session.get(DoctorSlot, a.slot_id) if a.slot_id else None
 
         enriched.append({
@@ -55,9 +51,6 @@ async def list_appointments(
     }
 
 
-# ─────────────────────────────────────────────
-# GET /appointments/{appointment_id}
-# ─────────────────────────────────────────────
 @router.get("/{appointment_id}")
 async def get_one(
     appointment_id: int,
@@ -84,12 +77,8 @@ async def get_one(
     }
 
 
-# ─────────────────────────────────────────────
-# GET /appointments/customer/{national_id}
-# All appointments for a specific customer
-# ─────────────────────────────────────────────
 @router.get("/customer/{national_id}")
-async def get_customer_appointments(
+async def get_customer_appointments_and_services(
     national_id: str,
     session: AsyncSession = Depends(get_session),
 ):
@@ -98,41 +87,68 @@ async def get_customer_appointments(
     )
     customer = customer_result.scalar_one_or_none()
     if not customer:
-        raise HTTPException(status_code=404, detail=" العميل غير موجود")
+        raise HTTPException(status_code=404, detail="العميل غير موجود")
 
-    result = await session.execute(
+    # جلب حجوزات الأطباء
+    appt_result = await session.execute(
         select(Appointment)
         .where(Appointment.customer_id == customer.id)
         .order_by(Appointment.appointment_date.desc())
     )
-    appointments = result.scalars().all()
+    appointments = appt_result.scalars().all()
+
+    # جلب طلبات الخدمات الإضافية
+    sr_result = await session.execute(
+        select(ServiceRequest)
+        .where(ServiceRequest.customer_id == customer.id)
+        .order_by(ServiceRequest.request_date.desc())
+    )
+    service_requests = sr_result.scalars().all()
 
     enriched = []
+
+    # إضافة حجوزات الأطباء
     for a in appointments:
         doctor = await session.get(Doctor, a.doctor_id)
         slot = await session.get(DoctorSlot, a.slot_id) if a.slot_id else None
         enriched.append({
-            "id":               a.id,
-            "doctor_id":        a.doctor_id,
-            "doctor_name":      doctor.name if doctor else None,
+            "id": a.id,
+            "type": "appointment",
+            "doctor_name": doctor.name if doctor else None,
             "appointment_date": a.appointment_date,
             "appointment_time": str(slot.slot_time) if slot else None,
-            "status":           a.status,
+            "status": a.status,
+            "service_name": None,
+            "branch_name": None
         })
+
+    # إضافة طلبات الخدمات الإضافية
+    for sr in service_requests:
+        service = await session.get(Service, sr.service_id)
+        branch = await session.get(Branch, sr.branch_id)
+        enriched.append({
+            "id": sr.id,
+            "type": "service",
+            "doctor_name": None,
+            "appointment_date": sr.request_date,
+            "appointment_time": None,
+            "status": sr.status.value,
+            "service_name": service.name_ar if service else None,
+            "branch_name": branch.name_ar if branch else None
+        })
+
+    # ترتيب تنازلي حسب التاريخ
+    enriched.sort(key=lambda x: x["appointment_date"], reverse=True)
 
     return {
         "customer_id":    customer.id,
         "customer_name":  customer.name,
         "national_id":    customer.national_id,
         "total":          len(enriched),
-        "appointments":   enriched,
+        "appointments":   enriched,   # الاسم يبقى كما هو للتوافق مع الواجهة
     }
 
 
-# ─────────────────────────────────────────────
-# PATCH /appointments/{appointment_id}/status
-# Change status with valid transition rules
-# ─────────────────────────────────────────────
 @router.patch("/{appointment_id}/status")
 async def change_status(
     appointment_id: int,
@@ -143,12 +159,12 @@ async def change_status(
     if body.status not in allowed_statuses:
         raise HTTPException(
             status_code=400,
-            detail=f" الحالة '{body.status}' غير صحيحة. المسموح: {allowed_statuses}",
+            detail=f"الحالة '{body.status}' غير صحيحة. المسموح: {allowed_statuses}",
         )
     try:
         a = await update_appointment_status(appointment_id, body.status, session)
         return {
-            "message":          f" تم تغيير الحالة إلى '{a.status}'",
+            "message":          f"تم تغيير الحالة إلى '{a.status}'",
             "appointment_id":   a.id,
             "status":           a.status,
             "appointment_date": a.appointment_date,
@@ -157,11 +173,6 @@ async def change_status(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-# ─────────────────────────────────────────────
-# DELETE /appointments/{appointment_id}
-# Cancel appointment → free the slot → delete record
-# This is the endpoint that unblocks re-booking
-# ─────────────────────────────────────────────
 @router.delete("/{appointment_id}")
 async def cancel_and_delete_appointment(
     appointment_id: int,
@@ -172,15 +183,15 @@ async def cancel_and_delete_appointment(
     )
     appointment = result.scalar_one_or_none()
     if not appointment:
-        raise HTTPException(status_code=404, detail=f" الحجز رقم {appointment_id} غير موجود")
+        raise HTTPException(status_code=404, detail=f"الحجز رقم {appointment_id} غير موجود")
 
     if appointment.status == "completed":
         raise HTTPException(
             status_code=400,
-            detail=" لا يمكن حذف حجز مكتمل",
+            detail="لا يمكن حذف حجز مكتمل",
         )
 
-    # Free the linked slot using slot_id directly
+    # تحرير الموعد
     slot = await session.get(DoctorSlot, appointment.slot_id)
     if slot:
         slot.is_available = True
@@ -192,7 +203,7 @@ async def cancel_and_delete_appointment(
     await session.commit()
 
     return {
-        "message":          f" تم حذف الحجز رقم {appointment_id} وتحرير الميعاد",
+        "message":          f"تم حذف الحجز رقم {appointment_id} وتحرير الميعاد",
         "appointment_id":   appointment_id,
         "customer_name":    customer.name if customer else None,
         "doctor_name":      doctor.name if doctor else None,

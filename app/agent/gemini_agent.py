@@ -6,65 +6,56 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.agent.tools import booking_tools
 from app.agent.functions import TOOL_EXECUTORS
 
-# Configure logger
 logger = logging.getLogger(__name__)
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-SYSTEM_PROMPT = """أنت مساعد حجز طبي. مهمتك الوحيدة هي تنفيذ الأدوات وعرض نتائجها للعميل.
+# System prompt in English (concise) - instructs agent to respond in user's language
+SYSTEM_PROMPT = """
+You are a medical booking assistant. Your only task is to execute tools and show results.
 
-التسلسل الإلزامي للحجز الطبي:
-1. اطلب الرقم القومي إذا لم يذكره العميل
-2. اطلب وصف الأعراض أو سبب الزيارة
-3. استدعِ search_doctors — واعرض النتيجة كما جاءت بالضبط (الاسم، التخصص، المدينة)
-4. اسأل العميل: أي دكتور من القائمة تفضل؟
-5. استدعِ get_slots للدكتور الذي اختاره العميل
-6. اعرض المواعيد المتاحة كما جاءت من الأداة
-7. اسأل العميل: أي موعد يناسبك؟
-8. اطلب تأكيداً صريحاً: "هل تؤكد الحجز مع [اسم الدكتور] في [الموعد]؟"
-9. بعد الموافقة الصريحة فقط استدعِ confirm_booking
+Mandatory sequence for doctor booking:
+1. Ask for national_id if not provided.
+2. Ask for symptoms.
+3. Call search_doctors and display results exactly as returned.
+4. Ask user: "Which doctor do you prefer?"
+5. Call get_slots for the chosen doctor.
+6. Show available slots as returned.
+7. Ask user: "Which slot do you prefer?"
+8. Request explicit confirmation: "Do you confirm booking with [doctor] on [slot]?"
+9. After explicit confirmation, call confirm_booking.
 
-التسلسل للخدمات الإضافية (بعد تأكيد الحجز):
-10. بعد تأكيد الحجز بنجاح، اسأل العميل: "هل تحتاج إلى أي خدمات إضافية؟ (تحاليل / أشعة / أدوية)"
-11. إذا أراد العميل خدمات إضافية، استدعِ get_available_services لعرض الخدمات المتاحة حسب الأعراض والمدينة
-12. اعرض الخدمات المتاحة كما جاءت من الأداة (اسم الخدمة، الفرع، السعر الأساسي)
-13. اسأل العميل عن الخدمة التي يريدها والفرع والموعد المطلوب
-14. استدعِ check_service_availability للتحقق من توفر الموعد
-15. إذا كان الموعد متاحاً، اعرضه للعميل واطلب تأكيده
-16. بعد موافقة العميل الصريحة على الخدمة والموعد، استدعِ request_service لطلب الخدمة
-17. أخبر العميل بأن طلب الخدمة قيد المراجعة وسيتم التواصل معه قريباً
+After successful doctor booking (confirmed):
+10. Ask: "Do you need any additional services? (lab tests / radiology / medicines)"
+11. If yes, ask: "Do you want lab tests or radiology?"
+12. Based on answer, call get_available_services with service_type="lab_test" or "radiology".
+13. Display available services as returned.
+14. Ask user to choose service, branch, date, and time.
+15. Call check_service_availability.
+16. If available, ask for explicit confirmation.
+17. After confirmation, call request_service.
+18. Inform user that the request is being processed.
 
-قواعد صارمة — لا استثناء:
-- لا تذكر أي دكتور إلا إذا جاء اسمه من نتيجة search_doctors مباشرة
-- لا تقترح أي دكتور من معلوماتك الخاصة أبداً حتى لو طلب العميل تخصصاً معيناً
-- إذا رجعت القائمة بتخصص مختلف عما طلبه العميل، أخبره بذلك واعرض ما هو متاح فقط
-- لا تستخدم confirm_booking إلا بـ doctor_id وslot_id جاءا من الأدوات فعلاً
-- لا تحجز بدون موافقة صريحة من العميل
-- لا تقترح خدمات إضافية قبل تأكيد الحجز الطبي الأساسي
-- لا تستخدم request_service إلا بعد موافقة العميل الصريحة على الخدمة والموعد
-- لا تستخدم check_service_availability إلا بعد اختيار العميل للخدمة والفرع
-- تكلم بالعربية دائماً
-- إذا رجع error من أي أداة، أخبر العميل بالسبب بوضوح"""
-
+Strict rules:
+- Never invent doctor names; only use search_doctors results.
+- Never use confirm_booking without doctor_id and slot_id from tools.
+- Never book without explicit user confirmation.
+- Always respond in the same language the user is using (Arabic or English).
+- If a tool returns an error, explain the reason clearly.
+"""
 
 def _has_function_call(response) -> bool:
-    """Check if the response contains a function call."""
     try:
         parts = response.candidates[0].content.parts
-        has_call = any(
-            hasattr(p, "function_call") and p.function_call.name
-            for p in parts
-        )
+        has_call = any(hasattr(p, "function_call") and p.function_call.name for p in parts)
         if has_call:
-            logger.debug("Function call detected in response")
+            logger.debug("Function call detected")
         return has_call
     except (IndexError, AttributeError) as e:
-        logger.debug(f"No function call found or error checking: {e}")
+        logger.debug(f"No function call: {e}")
         return False
 
-
 def _serialize_history(history) -> list:
-    """Serialize chat history for storage."""
     serialized = []
     for turn in history:
         parts = []
@@ -73,84 +64,45 @@ def _serialize_history(history) -> list:
                 parts.append({"text": p.text})
         if parts:
             serialized.append({"role": turn.role, "parts": parts})
-    logger.debug(f"Serialized {len(serialized)} history turns")
+    logger.debug(f"Serialized {len(serialized)} turns")
     return serialized
-
 
 async def run_agent(
     message: str,
     history: list,
     session: AsyncSession,
 ) -> tuple[str, list]:
-    """
-    Run the agent with the given message and history.
-    
-    Args:
-        message: User message
-        history: Previous conversation history
-        session: Database session
-    
-    Returns:
-        Tuple of (response text, serialized history)
-    """
-    logger.info(f"Running agent with message: {message[:100]}..." if len(message) > 100 else f"Running agent with message: {message}")
-    logger.debug(f"History length: {len(history)}")
-    
+    logger.info(f"Running agent with message: {message[:100]}...")
     try:
         model = genai.GenerativeModel(
             model_name="gemini-2.5-flash",
             tools=[booking_tools],
             system_instruction=SYSTEM_PROMPT,
         )
-        logger.debug("Gemini model initialized")
-
         chat = model.start_chat(history=history)
-        logger.debug("Chat started with history")
-        
         response = await chat.send_message_async(message)
-        logger.info("Initial response received from model")
-        
         function_call_count = 0
-        
+
         while _has_function_call(response):
             function_call_count += 1
-            logger.info(f"Processing function call iteration #{function_call_count}")
-            
             parts = response.candidates[0].content.parts
             tool_responses = []
 
-            for idx, part in enumerate(parts):
+            for part in parts:
                 if not (hasattr(part, "function_call") and part.function_call.name):
-                    logger.debug(f"Part {idx}: No function call found, skipping")
                     continue
-
                 fn_name = part.function_call.name
                 fn_args = dict(part.function_call.args)
-                logger.info(f"Executing function: {fn_name} with args: {fn_args}")
-                
+                logger.info(f"Executing {fn_name} with args: {fn_args}")
                 executor = TOOL_EXECUTORS.get(fn_name)
 
                 if not executor:
-                    logger.warning(f"Tool {fn_name} not found in TOOL_EXECUTORS")
                     fn_result = {"error": f"Tool {fn_name} not found"}
                 elif "session" in inspect.signature(executor).parameters:
-                    logger.debug(f"Executing {fn_name} with session parameter")
-                    try:
-                        fn_result = await executor(**fn_args, session=session)
-                        logger.info(f"Function {fn_name} executed successfully")
-                    except Exception as e:
-                        logger.error(f"Error executing {fn_name}: {e}", exc_info=True)
-                        fn_result = {"error": f"Error executing {fn_name}: {str(e)}"}
+                    fn_result = await executor(**fn_args, session=session)
                 else:
-                    logger.debug(f"Executing {fn_name} without session parameter")
-                    try:
-                        fn_result = await executor(**fn_args)
-                        logger.info(f"Function {fn_name} executed successfully")
-                    except Exception as e:
-                        logger.error(f"Error executing {fn_name}: {e}", exc_info=True)
-                        fn_result = {"error": f"Error executing {fn_name}: {str(e)}"}
-                
-                logger.debug(f"Function {fn_name} result: {fn_result}")
+                    fn_result = await executor(**fn_args)
+
                 tool_responses.append({
                     "function_response": {
                         "name": fn_name,
@@ -158,20 +110,12 @@ async def run_agent(
                     }
                 })
 
-            logger.info(f"Sending {len(tool_responses)} tool responses back to model")
             response = await chat.send_message_async(tool_responses)
-            logger.info("Received response after tool execution")
 
         reply = response.text
-        logger.info(f"Agent response generated: {reply[:100]}..." if len(reply) > 100 else f"Agent response generated: {reply}")
-        
         serialized_history = _serialize_history(chat.history)
-        logger.info(f"Agent run completed - {function_call_count} function calls made")
-        
         return reply, serialized_history
-        
+
     except Exception as e:
-        logger.error(f"Unexpected error in run_agent: {str(e)}", exc_info=True)
-        error_message = "عذراً، حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى."
-        logger.info(f"Returning error message to user: {error_message}")
-        return error_message, history
+        logger.error(f"Unexpected error: {e}", exc_info=True)
+        return "عذراً، حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.", history

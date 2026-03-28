@@ -2,6 +2,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date
 from sqlalchemy import select
+from typing import Optional
 from app.models import Doctor, DoctorSlot
 from app.services.booking_service import (
     search_doctors as _search_doctors,
@@ -15,7 +16,6 @@ from app.services.service_service import (
 from app.services.recommendation_service_v2 import get_available_services as _get_available_services
 from app.services.validation_service import validate_customer, validate_policy
 
-# Configure logger
 logger = logging.getLogger(__name__)
 
 
@@ -116,15 +116,11 @@ async def confirm_booking(
         return {"error": "An unexpected error occurred while confirming booking"}
 
 
-# =============================================
-# New Functions for Additional Services
-# =============================================
-
 async def get_package_benefits(
     national_id: str,
     session: AsyncSession,
 ) -> dict:
-    """الحصول على مميزات الباقة للعميل"""
+    """Get package benefits for the customer"""
     logger.info(f"Getting package benefits for national_id: {national_id}")
     try:
         customer = await validate_customer(national_id, session)
@@ -148,7 +144,7 @@ async def check_service_availability(
     requested_time: str,
     session: AsyncSession,
 ) -> dict:
-    """التحقق من توفر خدمة"""
+    """Check if a service is available at a branch"""
     logger.info(f"Checking service availability - service_id: {service_id}, branch_id: {branch_id}, date: {requested_date}, time: {requested_time}")
     try:
         requested_date_obj = date.fromisoformat(requested_date)
@@ -175,10 +171,10 @@ async def request_service(
     service_id: int,
     branch_id: int,
     slot_id: int,
-    appointment_id: int,
-    session: AsyncSession,
+    appointment_id: Optional[int] = None,
+    session: AsyncSession = None,
 ) -> dict:
-    """طلب خدمة إضافية"""
+    """Request an additional service (lab test/radiology)"""
     logger.info(f"Requesting service - national_id: {national_id}, service_id: {service_id}, slot_id: {slot_id}")
     try:
         result = await _request_service(
@@ -200,21 +196,23 @@ async def request_service(
 
 
 async def get_available_services(
-    symptom: str,
-    city: str,
     national_id: str,
-    session: AsyncSession,
+    city: str,
+    symptom: Optional[str] = None,
+    service_type: Optional[str] = None,
+    session: AsyncSession = None,
 ) -> dict:
-    """البحث عن خدمات متاحة حسب الأعراض والموقع"""
-    logger.info(f"Getting available services - symptom: {symptom}, city: {city}, national_id: {national_id}")
+    """Search for available services based on location and service type"""
+    logger.info(f"Getting available services - city: {city}, national_id: {national_id}, service_type: {service_type}")
     try:
         customer = await validate_customer(national_id, session)
         policy = await validate_policy(customer.id, session)
         
         result = await _get_available_services(
-            symptom=symptom,
+            symptom=symptom if symptom else "",
             city=city,
             package_id=policy.package_id,
+            service_type=service_type,
             session=session
         )
         logger.info(f"Found services in {len(result.get('available_branches', []))} branches")
@@ -226,10 +224,6 @@ async def get_available_services(
         logger.error(f"Unexpected error in get_available_services: {str(e)}", exc_info=True)
         return {"error": "An unexpected error occurred"}
 
-
-# =============================================
-# Tool Executors Mapping
-# =============================================
 
 TOOL_EXECUTORS = {
     "search_doctors": search_doctors,
