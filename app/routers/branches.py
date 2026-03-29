@@ -8,42 +8,21 @@ from app.schemas.branch import BranchOut
 
 router = APIRouter(prefix="/branches", tags=["Branches"])
 
-
-@router.get("/", response_model=List[BranchOut])
+@router.get("/")
 async def get_all_branches(
     city: Optional[str] = Query(None, description="Filter by city"),
     session: AsyncSession = Depends(get_session)
 ):
-    """الحصول على جميع الفروع أو تصفيتها حسب المدينة"""
     query = select(Branch).where(Branch.is_active == 1)
-    
     if city:
         query = query.where(Branch.city == city)
-    
     query = query.order_by(Branch.city, Branch.name_ar)
     result = await session.execute(query)
     branches = result.scalars().all()
-    
     return branches
-
-
-@router.get("/{branch_id}", response_model=BranchOut)
-async def get_branch(
-    branch_id: int,
-    session: AsyncSession = Depends(get_session)
-):
-    """الحصول على تفاصيل فرع معين"""
-    branch = await session.get(Branch, branch_id)
-    
-    if not branch or not branch.is_active:
-        raise HTTPException(status_code=404, detail="الفرع غير موجود")
-    
-    return branch
-
 
 @router.get("/cities/")
 async def get_cities(session: AsyncSession = Depends(get_session)):
-    """الحصول على قائمة المدن التي توجد بها فروع"""
     result = await session.execute(
         select(Branch.city)
         .where(Branch.is_active == 1)
@@ -51,5 +30,14 @@ async def get_cities(session: AsyncSession = Depends(get_session)):
         .order_by(Branch.city)
     )
     cities = [row[0] for row in result.all()]
-    
     return {"cities": cities}
+
+@router.get("/{branch_id}", response_model=BranchOut)
+async def get_branch(
+    branch_id: int,
+    session: AsyncSession = Depends(get_session)
+):
+    branch = await session.get(Branch, branch_id)
+    if not branch or not branch.is_active:
+        raise HTTPException(status_code=404, detail="الفرع غير موجود")
+    return branch

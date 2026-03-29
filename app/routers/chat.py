@@ -1,16 +1,15 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
-from typing import Literal, Optional
+from typing import Optional, Any
 from app.database import get_session
 from app.agent.agent import run_agent
 import uuid
 from app.schemas.chat import ChatRequest, ChatResponse
+
 router = APIRouter(prefix="/chat", tags=["Chat Agent"])
 
 sessions: dict = {}
-
-
 
 @router.post("/", response_model=ChatResponse)
 async def chat(
@@ -20,7 +19,7 @@ async def chat(
     session_id = body.session_id or str(uuid.uuid4())
     history = sessions.get(session_id, [])
 
-    reply, updated_history = await run_agent(
+    reply, updated_history, structured_data = await run_agent(
         message=body.message,
         history=history,
         session=session,
@@ -32,9 +31,5 @@ async def chat(
         "reply": reply,
         "session_id": session_id,
         "provider": "gemini",
+        "structured_data": structured_data,
     }
-
-@router.delete("/{session_id}")
-async def clear_session(session_id: str):
-    sessions.pop(session_id, None)
-    return {"message": "تم مسح المحادثة"}

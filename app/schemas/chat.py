@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Literal, Optional
+from typing import Literal, Optional, Any
 
 class ChatRequest(BaseModel):
     message: str
@@ -9,3 +9,4 @@ class ChatResponse(BaseModel):
     reply: str
     session_id: str
     provider: str
+    structured_data: Optional[Any] = None

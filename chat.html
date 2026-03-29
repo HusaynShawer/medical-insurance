@@ -2,1061 +2,1106 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>لوحة التحكم - نظام الحجز الطبي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الحجز الطبي</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --primary: #1a6b8a;
+            --primary-light: #2090b8;
+            --primary-dark: #104d66;
+            --accent: #00c9a7;
+            --accent-light: #e0faf5;
+            --bg: #f0f5f9;
+            --surface: #ffffff;
+            --surface2: #f7fafc;
+            --text: #1a2e3b;
+            --text-muted: #6b8a9a;
+            --border: #d4e5ef;
+            --shadow: 0 4px 24px rgba(26,107,138,0.10);
+            --shadow-sm: 0 2px 8px rgba(26,107,138,0.07);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --font: 'Cairo', 'Tajawal', sans-serif;
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            direction: rtl;
+            min-height: 100vh;
         }
 
+        /* ── NAVBAR ── */
         .navbar {
-            background: #2c3e50;
-            color: white;
-            padding: 0 20px;
+            background: var(--primary-dark);
+            padding: 0 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-
         .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            padding: 15px 0;
-        }
-
-        .nav-links {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: white;
+            padding: 16px 0;
             display: flex;
+            align-items: center;
             gap: 10px;
-            flex-wrap: wrap;
+            letter-spacing: -0.5px;
         }
-
+        .logo-icon {
+            width: 36px; height: 36px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            font-size: 1.1rem;
+        }
+        .nav-links { display: flex; gap: 4px; }
         .nav-links button {
             background: none;
             border: none;
-            color: white;
-            padding: 15px 10px;
+            color: rgba(255,255,255,0.7);
+            padding: 10px 16px;
             cursor: pointer;
-            font-size: 1rem;
-            transition: 0.2s;
+            font-size: 0.92rem;
+            font-family: var(--font);
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s;
         }
+        .nav-links button:hover { color: white; background: rgba(255,255,255,0.1); }
+        .nav-links button.active { color: white; background: var(--primary-light); }
 
-        .nav-links button:hover {
-            background: #34495e;
-        }
-
-        .nav-links button.active {
-            border-bottom: 3px solid #3498db;
-        }
-
+        /* ── LAYOUT ── */
         .container {
-            max-width: 1400px;
-            margin: 20px auto;
-            padding: 20px;
+            max-width: 900px;
+            margin: 28px auto;
+            padding: 0 20px;
+        }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeUp 0.3s ease; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        .section {
-            display: none;
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        /* ── SECTION HEADER ── */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .section-header h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+        .section-header .badge {
+            background: var(--accent-light);
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--accent);
         }
 
-        .section.active {
-            display: block;
+        /* ── CARD ── */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 18px;
+            box-shadow: var(--shadow-sm);
+            border: 1.5px solid var(--border);
+            transition: all 0.22s;
         }
-
-        h2 {
-            margin-bottom: 20px;
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-light);
+        }
+        .card.selected {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 14px;
+            margin-top: 14px;
+        }
+        .card h3 { font-size: 1rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px; }
+        .card p { font-size: 0.875rem; color: var(--text-muted); margin: 3px 0; }
+        .card .tag {
             display: inline-block;
-            padding-bottom: 5px;
+            background: #e8f4fc;
+            color: var(--primary);
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+        .card .price {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin-top: 6px;
         }
 
-        h3 {
-            margin: 15px 0 10px 0;
-            color: #34495e;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-family: inherit;
-            font-size: 1rem;
-        }
-
-        button {
-            background: #3498db;
+        /* ── BUTTONS ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--primary);
             color: white;
             border: none;
             padding: 10px 20px;
-            border-radius: 5px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            transition: 0.2s;
-            font-size: 1rem;
+            font-family: var(--font);
+            font-size: 0.9rem;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: var(--primary-light); transform: translateY(-1px); }
+        .btn-sm { padding: 7px 14px; font-size: 0.82rem; }
+        .btn-accent { background: var(--accent); }
+        .btn-accent:hover { background: #00a88c; }
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--primary);
+            color: var(--primary);
+        }
+        .btn-outline:hover { background: var(--primary); color: white; }
+        .btn-ghost {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1.5px solid var(--border);
+        }
+        .btn-ghost:hover { background: var(--border); }
+
+        /* ── FORM ── */
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.88rem; color: var(--primary-dark); }
+        select, input, textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: var(--font);
+            font-size: 0.95rem;
+            color: var(--text);
+            background: var(--surface);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        select:focus, input:focus, textarea:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(32,144,184,0.12);
         }
 
-        button:hover {
-            background: #2980b9;
-        }
-
-        button:disabled {
-            background: #95a5a6;
-            cursor: not-allowed;
-        }
-
-        .error {
-            color: #e74c3c;
-            padding: 10px;
-            background: #ffebee;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-
-        .success {
-            color: #27ae60;
-            padding: 10px;
-            background: #e8f5e9;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-
-        .info {
-            color: #2980b9;
-            padding: 10px;
-            background: #e3f2fd;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            background: #fafafa;
-        }
-
-        .service-card {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-
-        .row {
+        /* ── CHAT ── */
+        .chat-wrap {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1.5px solid var(--border);
+            overflow: hidden;
             display: flex;
-            gap: 20px;
-            margin-bottom: 15px;
+            flex-direction: column;
+            height: 72vh;
         }
-
-        .row .form-group {
-            flex: 1;
-        }
-
-        .slot-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .slot-item {
-            background: #ecf0f1;
-            padding: 8px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .slot-item:hover {
-            background: #bdc3c7;
-        }
-
-        .slot-item.selected {
-            background: #3498db;
-            color: white;
-        }
-
         .chat-messages {
-            height: 400px;
+            flex: 1;
             overflow-y: auto;
-            background: #f9f9f9;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background: var(--surface2);
+        }
+        .chat-messages::-webkit-scrollbar { width: 5px; }
+        .chat-messages::-webkit-scrollbar-track { background: transparent; }
+        .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        .msg-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            animation: msgIn 0.25s ease;
+        }
+        .msg-row.user { flex-direction: row-reverse; }
+
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .avatar.bot { background: var(--primary); color: white; }
+        .avatar.usr { background: var(--accent); color: white; }
+
+        .bubble {
+            max-width: 78%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+        .bubble.bot {
+            background: var(--surface);
+            color: var(--text);
+            border: 1.5px solid var(--border);
+            border-bottom-right-radius: 4px;
+        }
+        .bubble.usr {
+            background: var(--primary);
+            color: white;
+            border-bottom-left-radius: 4px;
+        }
+
+        /* inline cards inside chat */
+        .chat-cards { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .chat-card {
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+        .chat-card:hover { border-color: var(--primary-light); background: #edf6fc; }
+        .chat-card .info { flex: 1; }
+        .chat-card .info h4 { font-size: 0.9rem; font-weight: 700; color: var(--primary-dark); }
+        .chat-card .info p  { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+        .chat-card .info .badge-row { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+        .chat-card .badge-pill {
+            background: #e8f4fc;
+            color: var(--primary);
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .chat-card .badge-pill.green { background: var(--accent-light); color: #007a62; }
+
+        /* slot chips */
+        .slot-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+        .slot-chip {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 5px 13px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+            color: var(--primary-dark);
+        }
+        .slot-chip:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* city dropdown inside chat */
+        .city-picker {
+            margin-top: 10px;
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+        }
+        .city-picker p { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+        .city-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+        .city-chip {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.18s;
+            color: var(--primary-dark);
+        }
+        .city-chip:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* calendar inside chat */
+        .datetime-picker {
+            margin-top: 10px;
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+        }
+        .datetime-picker p { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 10px; font-weight: 600; }
+        .datetime-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+        .datetime-row .field { flex: 1; min-width: 140px; }
+        .datetime-row label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+        .time-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .time-chip {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--primary-dark);
+            transition: all 0.18s;
+        }
+        .time-chip:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .time-chip.selected { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* typing indicator */
+        .typing-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+        .typing-dots { display: flex; gap: 4px; }
+        .typing-dots span {
+            width: 7px; height: 7px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: dot 1.2s infinite;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dot {
+            0%,80%,100% { transform: scale(0.6); opacity: 0.4; }
+            40%          { transform: scale(1);   opacity: 1; }
+        }
+
+        /* chat bottom bar */
+        .chat-bar {
+            padding: 14px 16px;
+            background: var(--surface);
+            border-top: 1.5px solid var(--border);
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
-
-        .message {
-            max-width: 80%;
-            padding: 8px 12px;
-            border-radius: 15px;
-        }
-
-        .message.user {
-            background: #3498db;
-            color: white;
-            align-self: flex-end;
-        }
-
-        .message.assistant {
-            background: #ecf0f1;
-            color: #333;
-            align-self: flex-start;
-        }
-
-        .typing {
-            font-style: italic;
-            color: #888;
-            padding: 5px;
-        }
-
-        .chat-input {
-            display: flex;
-            gap: 10px;
-        }
-
-        .chat-input input {
+        .chat-input-row { display: flex; gap: 10px; }
+        .chat-input-row input {
             flex: 1;
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-radius: 24px;
+            padding: 10px 18px;
         }
+        .chat-input-row input:focus { border-color: var(--primary-light); }
+        .send-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .send-btn:hover { background: var(--primary-light); transform: scale(1.05); }
 
-        .quick-actions {
+        .quick-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+        .quick-pill {
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            color: var(--text);
+            border-radius: 20px;
+            padding: 5px 13px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all 0.18s;
+        }
+        .quick-pill:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* ── APPOINTMENTS ── */
+        .appt-card {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 14px;
+            align-items: flex-start;
+        }
+        .appt-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .appt-icon.doc { background: #e8f4fc; }
+        .appt-icon.lab { background: var(--accent-light); }
+        .appt-info { flex: 1; }
+        .appt-info h4 { font-weight: 700; color: var(--primary-dark); margin-bottom: 4px; }
+        .appt-info p  { font-size: 0.83rem; color: var(--text-muted); }
+        .status-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+        .status-badge.confirmed { background: #d4edda; color: #155724; }
+        .status-badge.pending   { background: #fff3cd; color: #856404; }
+        .status-badge.cancelled { background: #f8d7da; color: #721c24; }
+
+        /* ── FLATPICKR OVERRIDE ── */
+        .flatpickr-calendar {
+            font-family: var(--font) !important;
+            border-radius: var(--radius) !important;
+            box-shadow: var(--shadow) !important;
+            border: 1.5px solid var(--border) !important;
+        }
+        .flatpickr-day.selected, .flatpickr-day.selected:hover {
+            background: var(--primary) !important;
+            border-color: var(--primary) !important;
         }
 
-        .quick-btn {
-            background: #ecf0f1;
-            color: #2c3e50;
-            font-size: 0.9rem;
+        /* ── MISC ── */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
         }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 10px; }
+        .error-msg { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.88rem; margin-top: 8px; }
+        .success-msg { background: var(--accent-light); color: #065f46; border: 1px solid var(--accent); padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.88rem; margin-top: 8px; }
 
-        @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .nav-links {
-                justify-content: center;
-            }
-            .row {
-                flex-direction: column;
-                gap: 0;
-            }
+        @media (max-width: 640px) {
+            .navbar { flex-direction: column; align-items: stretch; padding: 8px 16px; }
+            .nav-links { justify-content: center; }
+            .chat-wrap { height: 80vh; }
         }
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <div class="logo">🏥 نظام الحجز الطبي المتطور</div>
-        <div class="nav-links">
-            <button data-section="chat">💬 محادثة ذكية</button>
-            <button data-section="booking">📅 حجز موعد</button>
-            <button data-section="services">🩺 خدمات إضافية</button>
-            <button data-section="appointments">📋 مواعيدي</button>
-            <button data-section="doctors">👨‍⚕️ الأطباء</button>
-            <button data-section="branches">🏢 الفروع</button>
-            <button data-section="package">⭐ مميزات الباقة</button>
-        </div>
-    </div>
 
-    <div class="container">
-        <!-- Chat Section -->
-        <div id="chat-section" class="section">
-            <h2>المساعد الطبي الذكي</h2>
+<div class="navbar">
+    <div class="logo">
+        <div class="logo-icon">🏥</div>
+        نظام الحجز الطبي
+    </div>
+    <div class="nav-links">
+        <button data-section="chat">💬 محادثة</button>
+        <button data-section="booking">📅 حجز دكتور</button>
+        <button data-section="services">🔬 خدمات</button>
+        <button data-section="appointments">📋 مواعيدي</button>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- ═══ CHAT ═══ -->
+    <div id="chat-section" class="section">
+        <div class="section-header">
+            <h2>المساعد الطبي</h2>
+            <span class="badge">ذكاء اصطناعي</span>
+        </div>
+        <div class="chat-wrap">
             <div class="chat-messages" id="chatMessages">
-                <div class="message assistant">مرحباً! أنا المساعد الطبي. كيف يمكنني مساعدتك اليوم؟</div>
-            </div>
-            <div class="typing" id="typingIndicator" style="display: none;">المساعد يكتب...</div>
-            <div class="chat-input">
-                <input type="text" id="chatInput" placeholder="اكتب رسالتك..." autocomplete="off">
-                <button id="sendChatBtn">إرسال</button>
-            </div>
-            <div class="quick-actions">
-                <button class="quick-btn" data-msg="أريد حجز موعد">📅 حجز موعد</button>
-                <button class="quick-btn" data-msg="أريد تحاليل طبية">🩸 تحاليل</button>
-                <button class="quick-btn" data-msg="أريد أشعة">📷 أشعة</button>
-                <button class="quick-btn" data-msg="عرض مميزات باقة التأمين">⭐ مميزات الباقة</button>
-            </div>
-        </div>
-
-        <!-- Booking Section -->
-        <div id="booking-section" class="section">
-            <h2>حجز موعد مع دكتور</h2>
-            <div class="form-group">
-                <label>الرقم القومي (14 رقم)</label>
-                <input type="text" id="bookingNationalId" placeholder="أدخل الرقم القومي">
-            </div>
-            <div class="form-group">
-                <label>وصف الأعراض</label>
-                <textarea id="bookingSymptom" rows="3" placeholder="مثال: صداع شديد، ألم في الصدر..."></textarea>
-            </div>
-            <button id="searchDoctorsBtn">🔍 البحث عن أطباء</button>
-            <div id="bookingDoctorsResult" style="margin-top: 20px;"></div>
-            <div id="bookingSlotsResult" style="margin-top: 20px;"></div>
-            <div id="bookingConfirmResult" style="margin-top: 20px;"></div>
-        </div>
-
-        <!-- Services Section -->
-        <div id="services-section" class="section">
-            <h2>🩺 حجز خدمات إضافية (تحاليل / أشعة)</h2>
-            
-            <div class="service-card">
-                <h3>📝 معلومات العميل</h3>
-                <div class="row">
-                    <div class="form-group">
-                        <label>الرقم القومي *</label>
-                        <input type="text" id="serviceNationalId" placeholder="أدخل الرقم القومي" value="23456789012345">
-                    </div>
-                    <div class="form-group">
-                        <label>المدينة *</label>
-                        <input type="text" id="serviceCity" placeholder="مثال: القاهرة" value="القاهرة">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>الأعراض (اختياري - لاقتراح الخدمات المناسبة)</label>
-                    <textarea id="serviceSymptom" rows="2" placeholder="اختياري: ارتفاع السكر، آلام المفاصل، صداع..."></textarea>
+                <div class="msg-row">
+                    <div class="avatar bot">🤖</div>
+                    <div class="bubble bot">مرحباً! أنا مساعدك الطبي. يمكنني مساعدتك في حجز موعد مع دكتور، أو البحث عن تحاليل وأشعة. كيف يمكنني مساعدتك؟</div>
                 </div>
             </div>
-
-            <div class="service-card">
-                <h3>🔍 اختيار الخدمة</h3>
-                <div class="row">
-                    <div class="form-group">
-                        <label>نوع الخدمة *</label>
-                        <select id="serviceTypeSelect">
-                            <option value="">-- اختر نوع الخدمة --</option>
-                            <option value="lab_test">🧪 تحاليل طبية</option>
-                            <option value="radiology">📷 أشعة</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>نوع التحليل/الأشعة *</label>
-                        <select id="serviceSelect" disabled>
-                            <option value="">-- اختر نوع الخدمة أولاً --</option>
-                        </select>
-                    </div>
+            <div class="chat-bar">
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="اكتب رسالتك هنا...">
+                    <button class="send-btn" id="sendChatBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                </div>
+                <div class="quick-pills">
+                    <button class="quick-pill" data-msg="أريد حجز موعد مع دكتور">📅 حجز دكتور</button>
+                    <button class="quick-pill" data-msg="أريد تحاليل دم">🧪 تحاليل</button>
+                    <button class="quick-pill" data-msg="أريد أشعة">📡 أشعة</button>
+                    <button class="quick-pill" data-msg="ما هي مواعيدي">📋 مواعيدي</button>
                 </div>
             </div>
-
-            <div class="service-card" id="branchSection" style="display: none;">
-                <h3>🏢 اختيار الفرع</h3>
-                <div class="form-group">
-                    <label>الفرع المتاح *</label>
-                    <select id="branchSelect">
-                        <option value="">-- اختر الفرع --</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="service-card" id="appointmentSection" style="display: none;">
-                <h3>📅 اختيار الموعد</h3>
-                <div class="form-group">
-                    <label>التاريخ المطلوب *</label>
-                    <input type="text" id="appointmentDate" placeholder="اختر التاريخ">
-                </div>
-                <div class="form-group" id="timeSlotGroup" style="display: none;">
-                    <label>الوقت المتاح *</label>
-                    <select id="timeSlotSelect">
-                        <option value="">-- اختر الوقت --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>رقم الحجز الطبي الأساسي (اختياري)</label>
-                    <input type="text" id="appointmentId" placeholder="اختياري - إذا كان لديك حجز سابق">
-                </div>
-            </div>
-
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
-                <button id="checkAvailabilityBtn" disabled>✅ التحقق من التوفر وحجز الخدمة</button>
-                <button id="resetServiceBtn" style="background: #95a5a6;">🔄 إعادة تعيين</button>
-            </div>
-            
-            <div id="serviceRequestResult" style="margin-top: 20px;"></div>
-        </div>
-
-        <!-- Appointments Section -->
-        <div id="appointments-section" class="section">
-            <h2>📋 مواعيدي</h2>
-            <div class="form-group">
-                <label>الرقم القومي</label>
-                <input type="text" id="appointmentNationalId" placeholder="أدخل الرقم القومي">
-            </div>
-            <button id="loadAppointmentsBtn">🔄 تحميل المواعيد</button>
-            <div id="appointmentsList" style="margin-top: 20px;"></div>
-        </div>
-
-        <!-- Doctors Section -->
-        <div id="doctors-section" class="section">
-            <h2>👨‍⚕️ قائمة الأطباء</h2>
-            <div class="form-group">
-                <label>فلترة حسب المدينة (اختياري)</label>
-                <input type="text" id="filterCity" placeholder="المدينة">
-                <button id="filterDoctorsBtn" style="margin-top: 5px;">بحث</button>
-            </div>
-            <div id="doctorsList" class="card-grid"></div>
-        </div>
-
-        <!-- Branches Section -->
-        <div id="branches-section" class="section">
-            <h2>🏢 الفروع</h2>
-            <div id="branchesList" class="card-grid"></div>
-        </div>
-
-        <!-- Package Benefits Section -->
-        <div id="package-section" class="section">
-            <h2>⭐ مميزات باقة التأمين</h2>
-            <div class="form-group">
-                <label>الرقم القومي</label>
-                <input type="text" id="packageNationalId" placeholder="أدخل الرقم القومي">
-                <button id="getPackageBenefitsBtn" style="margin-top: 10px;">عرض المميزات</button>
-            </div>
-            <div id="packageBenefitsResult"></div>
         </div>
     </div>
 
-    <script>
-        const API_BASE = 'http://localhost:8000';
-        let chatSessionId = localStorage.getItem('chat_session_id') || null;
-        let selectedServiceId = null;
-        let selectedBranchId = null;
-        let flatpickrInstance = null;
+    <!-- ═══ DOCTOR BOOKING ═══ -->
+    <div id="booking-section" class="section">
+        <div class="section-header">
+            <h2>حجز موعد مع دكتور</h2>
+        </div>
+        <div class="card" style="padding:24px">
+            <div class="form-group">
+                <label>الرقم القومي</label>
+                <input type="text" id="bookingNationalId" placeholder="أدخل 14 رقم" maxlength="14">
+            </div>
+            <div class="form-group">
+                <label>الأعراض</label>
+                <textarea id="bookingSymptom" rows="2" placeholder="مثال: صداع، ألم في الصدر..."></textarea>
+            </div>
+            <button class="btn" id="searchDoctorsBtn">🔍 بحث عن أطباء</button>
+        </div>
+        <div id="bookingDoctorsResult"></div>
+        <div id="bookingSlotsResult"></div>
+        <div id="bookingConfirmResult"></div>
+    </div>
 
-        // Helper Functions
-        async function apiCall(endpoint, method = 'GET', body = null) {
-            const options = {
-                method,
-                headers: { 'Content-Type': 'application/json' }
-            };
-            if (body) options.body = JSON.stringify(body);
-            const response = await fetch(`${API_BASE}${endpoint}`, options);
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || `HTTP ${response.status}`);
-            }
-            return await response.json();
-        }
-
-        // Navigation
-        document.querySelectorAll('[data-section]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const sectionId = btn.getAttribute('data-section') + '-section';
-                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-                document.getElementById(sectionId).classList.add('active');
-                document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
-        document.querySelector('[data-section="chat"]').click();
-
-        // Chat Functions
-        const chatMessages = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const sendChatBtn = document.getElementById('sendChatBtn');
-        const typingIndicator = document.getElementById('typingIndicator');
-
-        function addChatMessage(content, isUser = false, isError = false) {
-            const div = document.createElement('div');
-            div.className = `message ${isUser ? 'user' : (isError ? 'error' : 'assistant')}`;
-            div.textContent = content;
-            chatMessages.appendChild(div);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        async function sendChatMessage(message) {
-            if (!message.trim()) return;
-            addChatMessage(message, true);
-            chatInput.value = '';
-            typingIndicator.style.display = 'block';
-            try {
-                const payload = { message, session_id: chatSessionId };
-                const data = await apiCall('/chat', 'POST', payload);
-                if (data.session_id && !chatSessionId) {
-                    chatSessionId = data.session_id;
-                    localStorage.setItem('chat_session_id', chatSessionId);
-                }
-                addChatMessage(data.reply);
-            } catch (error) {
-                addChatMessage('حدث خطأ في الاتصال بالخادم.', false, true);
-            } finally {
-                typingIndicator.style.display = 'none';
-            }
-        }
-
-        sendChatBtn.addEventListener('click', () => sendChatMessage(chatInput.value));
-        chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(chatInput.value); });
-        document.querySelectorAll('.quick-btn').forEach(btn => {
-            btn.addEventListener('click', () => sendChatMessage(btn.getAttribute('data-msg')));
-        });
-
-        // Services Section
-        const serviceNationalId = document.getElementById('serviceNationalId');
-        const serviceCity = document.getElementById('serviceCity');
-        const serviceSymptom = document.getElementById('serviceSymptom');
-        const serviceTypeSelect = document.getElementById('serviceTypeSelect');
-        const serviceSelect = document.getElementById('serviceSelect');
-        const branchSelect = document.getElementById('branchSelect');
-        const branchSection = document.getElementById('branchSection');
-        const appointmentSection = document.getElementById('appointmentSection');
-        const appointmentDate = document.getElementById('appointmentDate');
-        const timeSlotGroup = document.getElementById('timeSlotGroup');
-        const timeSlotSelect = document.getElementById('timeSlotSelect');
-        const appointmentId = document.getElementById('appointmentId');
-        const checkAvailabilityBtn = document.getElementById('checkAvailabilityBtn');
-        const resetServiceBtn = document.getElementById('resetServiceBtn');
-        const serviceRequestResult = document.getElementById('serviceRequestResult');
-
-        serviceTypeSelect.addEventListener('change', async () => {
-            const serviceType = serviceTypeSelect.value;
-            if (!serviceType) {
-                serviceSelect.innerHTML = '<option value="">-- اختر نوع الخدمة أولاً --</option>';
-                serviceSelect.disabled = true;
-                branchSection.style.display = 'none';
-                appointmentSection.style.display = 'none';
-                checkAvailabilityBtn.disabled = true;
-                return;
-            }
-
-            const nationalId = serviceNationalId.value.trim();
-            const city = serviceCity.value.trim();
-            const symptom = serviceSymptom.value.trim();
-
-            if (!nationalId || !city) {
-                serviceRequestResult.innerHTML = '<div class="error">⚠️ الرجاء إدخال الرقم القومي والمدينة</div>';
-                serviceSelect.innerHTML = '<option value="">-- أكمل بيانات العميل أولاً --</option>';
-                serviceSelect.disabled = true;
-                return;
-            }
-
-            serviceSelect.innerHTML = '<option value="">جاري تحميل الخدمات...</option>';
-            serviceSelect.disabled = true;
-
-            try {
-                let url = `/services/available?city=${encodeURIComponent(city)}&national_id=${encodeURIComponent(nationalId)}&service_type=${serviceType}`;
-                if (symptom) {
-                    url += `&symptom=${encodeURIComponent(symptom)}`;
-                }
-                
-                const data = await apiCall(url, 'GET');
-                
-                if (!data.available_branches || data.available_branches.length === 0) {
-                    throw new Error('لا توجد خدمات متاحة من هذا النوع في هذه المدينة');
-                }
-                
-                const servicesMap = new Map();
-                data.available_branches.forEach(branch => {
-                    branch.services.forEach(service => {
-                        if (!servicesMap.has(service.service_id)) {
-                            servicesMap.set(service.service_id, {
-                                id: service.service_id,
-                                name: service.name,
-                                type: service.service_type,
-                                base_price: service.base_price
-                            });
-                        }
-                    });
-                });
-                
-                if (servicesMap.size === 0) {
-                    throw new Error('لا توجد خدمات متاحة');
-                }
-                
-                serviceSelect.innerHTML = '<option value="">-- اختر الخدمة المطلوبة --</option>';
-                for (const [id, service] of servicesMap) {
-                    const option = document.createElement('option');
-                    option.value = id;
-                    option.textContent = `${service.name} - ${service.base_price} جنيه`;
-                    serviceSelect.appendChild(option);
-                }
-                serviceSelect.disabled = false;
-                serviceRequestResult.innerHTML = `<div class="info">✅ تم العثور على ${servicesMap.size} خدمة متاحة</div>`;
-                
-            } catch (error) {
-                serviceRequestResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
-                serviceSelect.innerHTML = '<option value="">-- لا توجد خدمات متاحة --</option>';
-                serviceSelect.disabled = true;
-            }
-        });
-
-        serviceSelect.addEventListener('change', async () => {
-            const serviceId = serviceSelect.value;
-            if (!serviceId) {
-                branchSection.style.display = 'none';
-                appointmentSection.style.display = 'none';
-                checkAvailabilityBtn.disabled = true;
-                return;
-            }
-            
-            selectedServiceId = parseInt(serviceId);
-            const nationalId = serviceNationalId.value.trim();
-            const city = serviceCity.value.trim();
-            const symptom = serviceSymptom.value.trim();
-            const serviceType = serviceTypeSelect.value;
-            
-            branchSelect.innerHTML = '<option value="">جاري تحميل الفروع...</option>';
-            branchSelect.disabled = true;
-            branchSection.style.display = 'block';
-            
-            try {
-                let url = `/services/available?city=${encodeURIComponent(city)}&national_id=${encodeURIComponent(nationalId)}&service_type=${serviceType}`;
-                if (symptom) {
-                    url += `&symptom=${encodeURIComponent(symptom)}`;
-                }
-                const data = await apiCall(url, 'GET');
-                
-                const availableBranches = [];
-                data.available_branches.forEach(branch => {
-                    const hasService = branch.services.some(s => s.service_id === selectedServiceId);
-                    if (hasService) {
-                        availableBranches.push({
-                            id: branch.branch_id,
-                            name: branch.branch_name,
-                            address: branch.address
-                        });
-                    }
-                });
-                
-                if (availableBranches.length === 0) {
-                    throw new Error('لا توجد فروع تقدم هذه الخدمة');
-                }
-                
-                branchSelect.innerHTML = '<option value="">-- اختر الفرع --</option>';
-                availableBranches.forEach(branch => {
-                    const option = document.createElement('option');
-                    option.value = branch.id;
-                    option.textContent = `${branch.name} - ${branch.address}`;
-                    branchSelect.appendChild(option);
-                });
-                branchSelect.disabled = false;
-                
-            } catch (error) {
-                serviceRequestResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
-                branchSection.style.display = 'none';
-            }
-        });
-        
-        branchSelect.addEventListener('change', async () => {
-            const branchId = branchSelect.value;
-            if (!branchId) {
-                appointmentSection.style.display = 'none';
-                checkAvailabilityBtn.disabled = true;
-                return;
-            }
-            
-            selectedBranchId = parseInt(branchId);
-            appointmentSection.style.display = 'block';
-            
-            if (flatpickrInstance) {
-                flatpickrInstance.destroy();
-            }
-            
-            flatpickrInstance = flatpickr(appointmentDate, {
-                locale: 'ar',
-                dateFormat: 'Y-m-d',
-                minDate: 'today',
-                maxDate: new Date().fp_incr(30),
-                onChange: async function(selectedDates, dateStr) {
-                    if (dateStr) {
-                        timeSlotGroup.style.display = 'block';
-                        timeSlotSelect.innerHTML = '<option value="">جاري تحميل المواعيد...</option>';
-                        timeSlotSelect.disabled = true;
-                        
-                        // Simulate loading available time slots
-                        setTimeout(() => {
-                            const availableTimes = ['09:00:00', '10:00:00', '11:00:00', '12:00:00', '14:00:00', '15:00:00', '16:00:00'];
-                            timeSlotSelect.innerHTML = '<option value="">-- اختر الوقت --</option>';
-                            availableTimes.forEach(time => {
-                                const option = document.createElement('option');
-                                option.value = time;
-                                option.textContent = time;
-                                timeSlotSelect.appendChild(option);
-                            });
-                            timeSlotSelect.disabled = false;
-                            checkAvailabilityBtn.disabled = false;
-                        }, 500);
-                    }
-                }
-            });
-        });
-        
-        checkAvailabilityBtn.addEventListener('click', async () => {
-            const nationalId = serviceNationalId.value.trim();
-            const selectedTime = timeSlotSelect.value;
-            const selectedDate = appointmentDate.value;
-            const appointmentIdValue = appointmentId.value.trim();
-            
-            if (!nationalId || !selectedServiceId || !selectedBranchId || !selectedDate || !selectedTime) {
-                serviceRequestResult.innerHTML = '<div class="error">⚠️ الرجاء إكمال جميع البيانات المطلوبة</div>';
-                return;
-            }
-            
-            serviceRequestResult.innerHTML = '<div class="typing">جاري التحقق من التوفر وحجز الخدمة...</div>';
-            checkAvailabilityBtn.disabled = true;
-            
-            try {
-                const check = await apiCall('/services/check-availability', 'POST', {
-                    service_id: selectedServiceId,
-                    branch_id: selectedBranchId,
-                    requested_date: selectedDate,
-                    requested_time: selectedTime
-                });
-                
-                if (!check.available) {
-                    serviceRequestResult.innerHTML = `<div class="error">❌ ${check.message || 'الموعد غير متاح'}</div>`;
-                    checkAvailabilityBtn.disabled = false;
-                    return;
-                }
-                
-                const slotId = check.slot_id;
-                
-                // Send null if appointmentId is empty
-                const requestBody = {
-                    national_id: nationalId,
-                    service_id: selectedServiceId,
-                    branch_id: selectedBranchId,
-                    slot_id: slotId,
-                    appointment_id: appointmentIdValue ? parseInt(appointmentIdValue) : null
-                };
-                
-                const requestData = await apiCall('/services/request', 'POST', requestBody);
-                
-                serviceRequestResult.innerHTML = `
-                    <div class="success">
-                        ✅ <strong>تم حجز الخدمة بنجاح!</strong><br><br>
-                        📋 رقم الطلب: ${requestData.request_id}<br>
-                        🩺 الخدمة: ${requestData.service_name}<br>
-                        💰 التكلفة الإجمالية: ${requestData.total_cost} جنيه<br>
-                        💵 قيمة المشاركة: ${requestData.co_payment_amount} جنيه<br>
-                        📊 الحالة: ${requestData.status === 'pending' ? 'قيد المراجعة' : requestData.status}<br>
-                        📅 الموعد: ${selectedDate} ${selectedTime}<br><br>
-                        ⏳ سيتم التواصل معك قريباً لتأكيد الطلب.
+    <!-- ═══ SERVICES ═══ -->
+    <div id="services-section" class="section">
+        <div class="section-header">
+            <h2>خدمات إضافية</h2>
+            <span class="badge">تحاليل · أشعة</span>
+        </div>
+        <div class="card" style="padding:24px; margin-bottom:20px">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
+                <div class="form-group">
+                    <label>الرقم القومي</label>
+                    <input type="text" id="serviceNationalId" placeholder="14 رقم">
+                </div>
+                <div class="form-group">
+                    <label>المدينة</label>
+                    <select id="serviceCitySelect">
+                        <option value="">-- اختر المدينة --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>نوع الخدمة</label>
+                    <select id="serviceTypeSelect">
+                        <option value="">-- اختر النوع --</option>
+                        <option value="lab_test">🧪 تحاليل</option>
+                        <option value="radiology">📡 أشعة</option>
+                    </select>
+                </div>
+                <div class="form-group" style="align-self:flex-end">
+                    <button class="btn" id="loadServicesBtn" style="width:100%">عرض الخدمات</button>
+                </div>
+            </div>
+        </div>
+        <div id="servicesResult" class="card-grid"></div>
+        <div id="serviceDetails" style="display:none; margin-top:20px">
+            <div class="card" style="padding:24px">
+                <h3 style="margin-bottom:16px; color:var(--primary-dark)">📆 اختر الموعد</h3>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
+                    <div class="form-group">
+                        <label>التاريخ</label>
+                        <input type="text" id="serviceDate" placeholder="اختر التاريخ" readonly>
                     </div>
-                `;
-                
-                setTimeout(() => resetServiceForm(), 3000);
-                
-            } catch (error) {
-                serviceRequestResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
-                checkAvailabilityBtn.disabled = false;
+                    <div class="form-group" id="timeSlotGroup" style="display:none">
+                        <label>الوقت</label>
+                        <select id="timeSlotSelect"><option value="">اختر الوقت</option></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>رقم الحجز الطبي (اختياري)</label>
+                    <input type="text" id="serviceAppointmentId" placeholder="رقم الحجز إن وجد">
+                </div>
+                <button class="btn btn-accent" id="confirmServiceBtn">✅ تأكيد الحجز</button>
+            </div>
+        </div>
+        <div id="serviceRequestResult"></div>
+    </div>
+
+    <!-- ═══ APPOINTMENTS ═══ -->
+    <div id="appointments-section" class="section">
+        <div class="section-header"><h2>مواعيدي</h2></div>
+        <div class="card" style="padding:20px; margin-bottom:20px; display:flex; gap:10px; align-items:flex-end">
+            <div class="form-group" style="flex:1; margin:0">
+                <label>الرقم القومي</label>
+                <input type="text" id="appointmentNationalId" placeholder="14 رقم">
+            </div>
+            <button class="btn" id="loadAppointmentsBtn">عرض المواعيد</button>
+        </div>
+        <div id="appointmentsList" style="display:flex; flex-direction:column; gap:12px"></div>
+    </div>
+
+</div>
+
+<script>
+const API_BASE = 'http://localhost:8000';
+let chatSessionId = localStorage.getItem('chat_session_id') || null;
+let selectedService = null;
+let selectedBranch  = null;
+let fpInstance      = null;
+
+const KNOWN_CITIES = ["القاهرة","الإسكندرية","الجيزة","الأقصر","أسوان","طنطا","المنصورة","الإسماعيلية"];
+
+// ── API HELPER ──────────────────────────────────────────────
+async function apiCall(endpoint, method = 'GET', body = null) {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(`${API_BASE}${endpoint}`, opts);
+    if (!res.ok) { const t = await res.text(); throw new Error(t || `HTTP ${res.status}`); }
+    return res.json();
+}
+
+// ── NAVIGATION ──────────────────────────────────────────────
+document.querySelectorAll('[data-section]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-section') + '-section';
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    });
+});
+document.querySelector('[data-section="chat"]').click();
+
+// ── LOAD CITIES ─────────────────────────────────────────────
+async function loadCities() {
+    try {
+        const data = await apiCall('/branches/cities/');
+        const sel = document.getElementById('serviceCitySelect');
+        sel.innerHTML = '<option value="">-- اختر المدينة --</option>';
+        (data.cities || KNOWN_CITIES).forEach(c => {
+            const o = document.createElement('option');
+            o.value = c; o.textContent = c;
+            sel.appendChild(o);
+        });
+    } catch { /* use static list already in HTML */ }
+}
+loadCities();
+
+// ── CHAT ────────────────────────────────────────────────────
+const chatMessages = document.getElementById('chatMessages');
+const chatInput    = document.getElementById('chatInput');
+
+function scrollBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
+
+function addUserMsg(text) {
+    const row = document.createElement('div');
+    row.className = 'msg-row user';
+    row.innerHTML = `<div class="avatar usr">👤</div><div class="bubble usr">${escHtml(text)}</div>`;
+    chatMessages.appendChild(row);
+    scrollBottom();
+}
+
+function addBotMsg(text, extras = '') {
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    row.innerHTML = `
+        <div class="avatar bot">🤖</div>
+        <div class="bubble bot">
+            <div>${escHtml(text)}</div>
+            ${extras}
+        </div>`;
+    chatMessages.appendChild(row);
+    scrollBottom();
+    return row;
+}
+
+function showTyping() {
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    row.id = 'typingRow';
+    row.innerHTML = `<div class="avatar bot">🤖</div><div class="bubble bot"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+    chatMessages.appendChild(row);
+    scrollBottom();
+}
+function hideTyping() {
+    const el = document.getElementById('typingRow');
+    if (el) el.remove();
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Detect if agent reply is asking for city
+function wantsCity(text) {
+    return /مدين|city|المدن المتاحة|اختر المدينة/i.test(text);
+}
+// Detect if agent reply is asking for date/time
+function wantsDateTime(text) {
+    return /تاريخ|وقت|date|time|موعد/i.test(text) && !/لا تتوفر/i.test(text);
+}
+
+function buildCityPicker() {
+    return `
+    <div class="city-picker">
+        <p>اختر مدينتك:</p>
+        <div class="city-chips">
+            ${KNOWN_CITIES.map(c => `<button class="city-chip" data-city="${c}">${c}</button>`).join('')}
+        </div>
+    </div>`;
+}
+
+// ── datetime picker state (one active picker at a time) ──
+let _dtState = { date: '', time: '', id: '' };
+
+function buildDateTimePicker() {
+    const id = 'fp_' + Date.now();
+    _dtState = { date: '', time: '', id };
+    const times = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+    const chips = times.map(t =>
+        `<button class="time-chip" data-picker="${id}" data-time="${t}:00">${t}</button>`
+    ).join('');
+    const html = `
+    <div class="datetime-picker" data-picker-root="${id}">
+        <p>اختر التاريخ والوقت:</p>
+        <div class="datetime-row">
+            <div class="field">
+                <label>التاريخ (مثال: 2026-03-30)</label>
+                <input type="text" id="date_${id}" placeholder="اكتب التاريخ أو اضغط للتقويم" data-picker="${id}">
+            </div>
+        </div>
+        <label style="font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-top:8px;display:block">اختر الوقت</label>
+        <div class="time-chips" id="tc_${id}">${chips}</div>
+        <div id="dt_hint_${id}" style="margin-top:8px;font-size:0.78rem;color:#e67e22;font-weight:600"></div>
+        <div id="dt_confirm_${id}" style="margin-top:10px"></div>
+    </div>`;
+
+    // Init flatpickr AFTER the element is in the DOM
+    setTimeout(() => {
+        const el = document.getElementById('date_' + id);
+        if (!el) return;
+        flatpickr(el, {
+            locale: 'ar',
+            dateFormat: 'Y-m-d',
+            minDate: 'today',
+            maxDate: new Date().fp_incr(60),
+            allowInput: true,
+            onChange: (_, dateStr) => {
+                _dtState.date = dateStr;
+                _dtPickerRender(id);
             }
         });
-        
-        function resetServiceForm() {
-            serviceTypeSelect.value = '';
-            serviceSelect.innerHTML = '<option value="">-- اختر نوع الخدمة أولاً --</option>';
-            serviceSelect.disabled = true;
-            branchSelect.innerHTML = '<option value="">-- اختر الفرع --</option>';
-            branchSection.style.display = 'none';
-            appointmentSection.style.display = 'none';
-            appointmentDate.value = '';
-            timeSlotSelect.innerHTML = '<option value="">-- اختر الوقت --</option>';
-            timeSlotGroup.style.display = 'none';
-            checkAvailabilityBtn.disabled = true;
-            selectedServiceId = null;
-            selectedBranchId = null;
-            if (flatpickrInstance) {
-                flatpickrInstance.destroy();
-                flatpickrInstance = null;
+        // Also handle manual typing
+        el.addEventListener('change', () => {
+            if (!_dtState.date && el.value) {
+                _dtState.date = el.value;
+                _dtPickerRender(id);
             }
-            serviceRequestResult.innerHTML = '';
+        });
+    }, 50);
+
+    return html;
+}
+
+function _dtPickerRender(id) {
+    const hint = document.getElementById('dt_hint_' + id);
+    const area = document.getElementById('dt_confirm_' + id);
+    if (!hint || !area) return;
+    const { date, time } = _dtState;
+    if (!date && !time) { hint.textContent = ''; area.innerHTML = ''; return; }
+    if (!date) { hint.textContent = 'يرجى كتابة أو اختيار التاريخ أولاً'; area.innerHTML = ''; return; }
+    if (!time) { hint.textContent = 'يرجى اختيار الوقت من الأزرار أعلاه'; area.innerHTML = ''; return; }
+    hint.textContent = '';
+    area.innerHTML = `<button class="btn btn-sm btn-accent" id="dt_send_${id}">✅ تأكيد — ${date}  ${time.slice(0,5)}</button>`;
+    document.getElementById('dt_send_' + id).addEventListener('click', () => {
+        sendChatMessage('التاريخ: ' + date + ' الوقت: ' + time);
+    });
+}
+
+// Global event delegation for time chips — works inside dynamically injected HTML
+document.addEventListener('click', function(e) {
+    const chip = e.target.closest('.time-chip[data-picker]');
+    if (!chip) return;
+    const pickerId = chip.getAttribute('data-picker');
+    if (_dtState.id !== pickerId) return;
+    document.querySelectorAll(`.time-chip[data-picker="${pickerId}"]`)
+        .forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    _dtState.time = chip.getAttribute('data-time');
+    _dtPickerRender(pickerId);
+});
+
+
+function buildDoctorCards(doctors) {
+    if (!doctors || !doctors.length) return '';
+    const items = doctors.map((d,i) => `
+        <div class="chat-card">
+            <div class="info">
+                <h4>${i+1}. ${escHtml(d.name)}</h4>
+                <p>${escHtml(d.specialization || '')}</p>
+                <div class="badge-row">
+                    <span class="badge-pill">${escHtml(d.city || '')}</span>
+                    ${d.fee ? `<span class="badge-pill green">${d.fee} جنيه</span>` : ''}
+                </div>
+            </div>
+            <button class="btn btn-sm" onclick="chatSend('أختار الدكتور ${escHtml(d.name)}')">اختيار</button>
+        </div>`).join('');
+    return `<div class="chat-cards">${items}</div>`;
+}
+
+function buildSlotChips(slots) {
+    if (!slots || !slots.length) return '';
+    const chips = slots.map(s => `
+        <button class="slot-chip" onclick="chatSend('أختار الموعد ${s.date} ${s.time}')">
+            📅 ${s.date} ⏰ ${s.time}
+        </button>`).join('');
+    return `<div class="slot-chips">${chips}</div>`;
+}
+
+function buildServiceCards(branches) {
+    if (!branches || !branches.length) return '';
+    const items = branches.flatMap(b =>
+        (b.services || []).map(s => `
+        <div class="chat-card">
+            <div class="info">
+                <h4>${escHtml(s.name)}</h4>
+                <p>${escHtml(b.branch_name || '')}</p>
+                <div class="badge-row">
+                    <span class="badge-pill green">${s.base_price} جنيه</span>
+                </div>
+            </div>
+            <button class="btn btn-sm btn-accent" onclick="chatSend('أريد خدمة ${escHtml(s.name)} في فرع ${escHtml(b.branch_name)}')">اختيار</button>
+        </div>`)
+    ).join('');
+    return `<div class="chat-cards">${items}</div>`;
+}
+
+// sendFromDatePicker removed — handled by _dtPickerRender event listener
+
+function chatSend(text) {
+    sendChatMessage(text);
+}
+
+async function sendChatMessage(msg) {
+    if (!msg.trim()) return;
+    addUserMsg(msg);
+    chatInput.value = '';
+    showTyping();
+
+    try {
+        const data = await apiCall('/chat', 'POST', { message: msg, session_id: chatSessionId });
+        hideTyping();
+
+        if (data.session_id && !chatSessionId) {
+            chatSessionId = data.session_id;
+            localStorage.setItem('chat_session_id', chatSessionId);
         }
-        
-        resetServiceBtn.addEventListener('click', resetServiceForm);
 
-        // Appointments Section script
-        const appointmentNationalId = document.getElementById('appointmentNationalId');
-        const appointmentsList = document.getElementById('appointmentsList');
+        const reply   = data.reply || '';
+        const sd      = data.structured_data;
+        let extras    = '';
 
-        document.getElementById('loadAppointmentsBtn').addEventListener('click', async () => {
-            const nationalId = appointmentNationalId.value.trim();
-            if (!nationalId) {
-                appointmentsList.innerHTML = '<div class="error">⚠️ الرجاء إدخال الرقم القومي</div>';
-                return;
-            }
-
-            try {
-                const data = await apiCall(`/appointments/customer/${nationalId}`, 'GET');
-                let html = `<h3>📋 مواعيد وخدمات ${data.customer_name || nationalId}</h3>`;
-
-                if (!data.appointments || data.appointments.length === 0) {
-                    html += '<p>لا توجد مواعيد أو خدمات مسجلة.</p>';
-                } else {
-                    html += '<div class="card-grid">';
-                    data.appointments.forEach(item => {
-                        if (item.type === 'appointment') {
-                            const statusText = item.status === 'pending' ? '⏳ قيد الانتظار' :
-                                              item.status === 'confirmed' ? '✅ مؤكد' :
-                                              item.status === 'completed' ? '✔️ مكتمل' : '❌ ملغي';
-                            html += `<div class="card">
-                                <h3>📋 حجز دكتور رقم: ${item.id}</h3>
-                                <p>👨‍⚕️ الدكتور: ${item.doctor_name || 'غير محدد'}</p>
-                                <p>📅 التاريخ: ${item.appointment_date || 'غير محدد'}</p>
-                                <p>🕒 الوقت: ${item.appointment_time || 'غير محدد'}</p>
-                                <p>📊 الحالة: ${statusText}</p>
-                                ${item.status !== 'completed' && item.status !== 'cancelled' ?
-                                    `<button class="cancelAppointmentBtn" data-id="${item.id}">❌ إلغاء الحجز</button>` : ''}
-                            </div>`;
-                        } else {
-                            const statusText = item.status === 'pending' ? '⏳ قيد المراجعة' :
-                                              item.status === 'approved' ? '✅ موافق عليه' :
-                                              item.status === 'rejected' ? '❌ مرفوض' :
-                                              item.status === 'completed' ? '✔️ منجز' : '❌ ملغي';
-                            html += `<div class="card">
-                                <h3>🩺 طلب خدمة رقم: ${item.id}</h3>
-                                <p>🏷️ الخدمة: ${item.service_name || 'غير محدد'}</p>
-                                <p>🏢 الفرع: ${item.branch_name || 'غير محدد'}</p>
-                                <p>📅 تاريخ الطلب: ${item.appointment_date || 'غير محدد'}</p>
-                                <p>📊 الحالة: ${statusText}</p>
-                            </div>`;
-                        }
-                    });
-                    html += '</div>';
-                }
-
-                appointmentsList.innerHTML = html;
-
-                // إعادة ربط أزرار الإلغاء للحجوزات فقط
-                document.querySelectorAll('.cancelAppointmentBtn').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const appId = parseInt(btn.getAttribute('data-id'));
-                        if (!Number.isFinite(appId)) return;
-
-                        if (confirm('هل أنت متأكد من إلغاء هذا الحجز؟')) {
-                            try {
-                                const response = await fetch(`${API_BASE}/appointments/${appId}`, { method: 'DELETE' });
-                                if (!response.ok) {
-                                    const msg = await response.text();
-                                    throw new Error(msg || 'حدث خطأ أثناء إلغاء الحجز');
-                                }
-                                alert('✅ تم إلغاء الحجز بنجاح');
-                                document.getElementById('loadAppointmentsBtn').click();
-                            } catch (error) {
-                                alert('❌ فشل الإلغاء: ' + (error.message || 'خطأ غير معروف'));
-                            }
-                        }
-                    });
-                });
-            } catch (error) {
-                appointmentsList.innerHTML = `<div class="error">❌ ${error.message || 'فشل في تحميل المواعيد'}</div>`;
-            }
-        });
-
-        // Booking Section
-        const bookingNationalId = document.getElementById('bookingNationalId');
-        const bookingSymptom = document.getElementById('bookingSymptom');
-        const bookingDoctorsResult = document.getElementById('bookingDoctorsResult');
-        const bookingSlotsResult = document.getElementById('bookingSlotsResult');
-        const bookingConfirmResult = document.getElementById('bookingConfirmResult');
-        
-        let selectedDoctor = null;
-        let selectedDoctorSlot = null;
-        
-        document.getElementById('searchDoctorsBtn').addEventListener('click', async () => {
-            const nationalId = bookingNationalId.value.trim();
-            const symptom = bookingSymptom.value.trim();
-            if (!nationalId || !symptom) {
-                bookingDoctorsResult.innerHTML = '<div class="error">⚠️ الرجاء إدخال الرقم القومي والأعراض</div>';
-                return;
-            }
-            try {
-                const data = await apiCall('/booking/search', 'POST', { national_id: nationalId, symptom });
-                let html = `<h3>👨‍⚕️ الأطباء المتاحون في شبكتك (${data.specialization})</h3><div class="card-grid">`;
-                data.doctors.forEach(doc => {
-                    html += `<div class="card" data-doctor-id="${doc.id}" data-doctor-name="${doc.name}" data-doctor-specialization="${doc.specialization}">
-                        <h3>👨‍⚕️ ${doc.name}</h3>
-                        <p>🔬 التخصص: ${doc.specialization}</p>
-                        <p>📍 المدينة: ${doc.city}</p>
-                        <button class="selectDoctorBtn">✅ اختيار</button>
-                    </div>`;
-                });
-                html += '</div>';
-                bookingDoctorsResult.innerHTML = html;
-                document.querySelectorAll('.selectDoctorBtn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const card = e.target.closest('.card');
-                        selectedDoctor = {
-                            id: parseInt(card.getAttribute('data-doctor-id')),
-                            name: card.getAttribute('data-doctor-name'),
-                            specialization: card.getAttribute('data-doctor-specialization')
-                        };
-                        bookingDoctorsResult.innerHTML += `<p class="success">✅ تم اختيار الدكتور: ${selectedDoctor.name}</p>`;
-                        loadDoctorSlots(selectedDoctor.id);
-                    });
-                });
-            } catch (error) {
-                bookingDoctorsResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
-            }
-        });
-        
-        async function loadDoctorSlots(doctorId) {
-            try {
-                const data = await apiCall(`/slots/${doctorId}`, 'GET');
-                let html = `<h3>📅 مواعيد متاحة للدكتور ${data.doctor_name}</h3><div class="slot-list">`;
-                data.available_slots.forEach(slot => {
-                    html += `<div class="slot-item" data-slot-id="${slot.id}" data-slot-date="${slot.slot_date}" data-slot-time="${slot.slot_time}">
-                        📅 ${slot.slot_date} | 🕒 ${slot.slot_time}
-                    </div>`;
-                });
-                html += '</div><button id="confirmBookingBtn" style="margin-top: 15px;">✅ تأكيد الحجز</button>';
-                bookingSlotsResult.innerHTML = html;
-                document.querySelectorAll('.slot-item').forEach(el => {
-                    el.addEventListener('click', () => {
-                        document.querySelectorAll('.slot-item').forEach(s => s.classList.remove('selected'));
-                        el.classList.add('selected');
-                        selectedDoctorSlot = {
-                            id: parseInt(el.getAttribute('data-slot-id')),
-                            date: el.getAttribute('data-slot-date'),
-                            time: el.getAttribute('data-slot-time')
-                        };
-                    });
-                });
-                document.getElementById('confirmBookingBtn').addEventListener('click', async () => {
-                    if (!selectedDoctorSlot) {
-                        alert('⚠️ الرجاء اختيار موعد');
-                        return;
-                    }
-                    try {
-                        const confirmData = await apiCall('/booking/confirm', 'POST', {
-                            national_id: bookingNationalId.value.trim(),
-                            doctor_id: selectedDoctor.id,
-                            slot_id: selectedDoctorSlot.id
-                        });
-                        bookingConfirmResult.innerHTML = `<div class="success">✅ تم الحجز بنجاح!<br>📋 رقم الحجز: ${confirmData.appointment_id}<br>👨‍⚕️ الدكتور: ${confirmData.doctor_name}<br>📅 الموعد: ${confirmData.appointment_date} ${confirmData.appointment_time}</div>`;
-                    } catch (error) {
-                        bookingConfirmResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
-                    }
-                });
-            } catch (error) {
-                bookingSlotsResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
-            }
+        if (sd) {
+            if (sd.doctors)            extras += buildDoctorCards(sd.doctors);
+            if (sd.available_slots)    extras += buildSlotChips(sd.available_slots);
+            if (sd.available_branches) extras += buildServiceCards(sd.available_branches);
         }
 
-        // Doctors Section
-        const filterCity = document.getElementById('filterCity');
-        const doctorsList = document.getElementById('doctorsList');
-        
-        async function loadDoctors(city = '') {
-            try {
-                let url = '/doctors';
-                if (city) url += `/${encodeURIComponent(city)}`;
-                const data = await apiCall(url, 'GET');
-                let html = '';
-                data.forEach(doc => {
-                    html += `<div class="card">
-                        <h3>👨‍⚕️ ${doc.name}</h3>
-                        <p>🔬 التخصص: ${doc.specialization}</p>
-                        <p>📍 المدينة: ${doc.city}</p>
-                    </div>`;
-                });
-                doctorsList.innerHTML = html || '<p>لا يوجد أطباء في هذه المدينة</p>';
-            } catch (error) {
-                doctorsList.innerHTML = `<div class="error">❌ ${error.message}</div>`;
-            }
-        }
-        
-        document.getElementById('filterDoctorsBtn').addEventListener('click', () => {
-            loadDoctors(filterCity.value.trim());
-        });
-        loadDoctors();
+        // Smart extras: city picker / datetime picker
+        if (!extras && wantsCity(reply))     extras += buildCityPicker();
+        if (!extras && wantsDateTime(reply)) extras += buildDateTimePicker();
 
-        // Branches Section
-        const branchesList = document.getElementById('branchesList');
-        
-        async function loadBranches() {
-            try {
-                const data = await apiCall('/branches', 'GET');
-                let html = '';
-                data.forEach(branch => {
-                    html += `<div class="card">
-                        <h3>🏢 ${branch.name_ar}</h3>
-                        <p>📍 العنوان: ${branch.address}</p>
-                        <p>📞 الهاتف: ${branch.phone}</p>
-                        <p>🏙️ المدينة: ${branch.city}</p>
-                    </div>`;
-                });
-                branchesList.innerHTML = html;
-            } catch (error) {
-                branchesList.innerHTML = `<div class="error">❌ ${error.message}</div>`;
-            }
-        }
-        loadBranches();
+        const row = addBotMsg(reply, extras);
 
-        // Package Benefits Section
-        const packageNationalId = document.getElementById('packageNationalId');
-        const packageBenefitsResult = document.getElementById('packageBenefitsResult');
-        
-        document.getElementById('getPackageBenefitsBtn').addEventListener('click', async () => {
-            const nationalId = packageNationalId.value.trim();
-            if (!nationalId) {
-                packageBenefitsResult.innerHTML = '<div class="error">⚠️ الرجاء إدخال الرقم القومي</div>';
-                return;
-            }
-            try {
-                const policiesData = await apiCall(`/policies/customer/${nationalId}`, 'GET');
-                if (!policiesData.policies || policiesData.policies.length === 0) {
-                    throw new Error('لا توجد بوليصة تأمين للعميل');
-                }
-                const activePolicy = policiesData.policies.find(p => p.is_active);
-                if (!activePolicy) throw new Error('لا توجد بوليصة تأمين نشطة');
-                
-                const packageId = activePolicy.package_id;
-                const data = await apiCall(`/services/package/${packageId}/benefits`, 'GET');
-                
-                let html = `<div class="card">
-                    <h3>⭐ مميزات باقة التأمين</h3>
-                    <p><strong>اسم الباقة:</strong> ${data.package_name}</p>
-                    <p><strong>نسبة الخصم:</strong> ${data.discount_percentage * 100}%</p>
-                    <p><strong>الحد الأقصى للتحاليل شهرياً:</strong> ${data.max_lab_tests_per_month}</p>
-                    <p><strong>الحد الأقصى للأشعة شهرياً:</strong> ${data.max_radiology_per_month}</p>
-                    <h4>📋 الخدمات المشمولة:</h4>
-                    <ul>`;
-                data.services.forEach(s => {
-                    const serviceType = s.service_type === 'lab_test' ? '🧪 تحليل' : s.service_type === 'radiology' ? '📷 أشعة' : '👨‍⚕️ استشارة';
-                    html += `<li>${s.name} (${serviceType}) - نسبة المشاركة: ${s.co_payment * 100}% - الحد الشهري: ${s.max_visits_per_month}</li>`;
-                });
-                html += `</ul></div>`;
-                packageBenefitsResult.innerHTML = html;
-            } catch (error) {
-                packageBenefitsResult.innerHTML = `<div class="error">❌ ${error.message}</div>`;
-            }
+        // Wire city chips
+        row.querySelectorAll('.city-chip').forEach(btn => {
+            btn.addEventListener('click', () => chatSend(btn.getAttribute('data-city')));
         });
-    </script>
+
+    } catch(e) {
+        hideTyping();
+        addBotMsg('حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.');
+    }
+}
+
+document.getElementById('sendChatBtn').addEventListener('click', () => sendChatMessage(chatInput.value));
+chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendChatMessage(chatInput.value); });
+document.querySelectorAll('.quick-pill').forEach(b => {
+    b.addEventListener('click', () => sendChatMessage(b.getAttribute('data-msg')));
+});
+
+// ── DOCTOR BOOKING SECTION ──────────────────────────────────
+let selDoctor = null, selDocSlot = null;
+
+document.getElementById('searchDoctorsBtn').addEventListener('click', async () => {
+    const nid  = document.getElementById('bookingNationalId').value.trim();
+    const symp = document.getElementById('bookingSymptom').value.trim();
+    const res  = document.getElementById('bookingDoctorsResult');
+    if (!nid || !symp) { res.innerHTML = '<div class="error-msg">الرجاء إدخال الرقم القومي والأعراض</div>'; return; }
+    res.innerHTML = '<div style="padding:20px;color:var(--text-muted)">جاري البحث...</div>';
+    try {
+        const data = await apiCall('/booking/search', 'POST', { national_id: nid, symptom: symp });
+        let html = '<div class="card-grid" style="margin-top:16px">';
+        data.doctors.forEach(d => {
+            html += `<div class="card">
+                <h3>${escHtml(d.name)}</h3>
+                <p>${escHtml(d.specialization)}</p>
+                <span class="tag">${escHtml(d.city)}</span>
+                <div style="margin-top:10px"><button class="btn btn-sm" data-id="${d.id}" data-name="${escHtml(d.name)}">اختيار</button></div>
+            </div>`;
+        });
+        html += '</div>';
+        res.innerHTML = html;
+        res.querySelectorAll('.btn').forEach(btn => {
+            btn.onclick = async () => {
+                selDoctor = { id: parseInt(btn.getAttribute('data-id')), name: btn.getAttribute('data-name') };
+                res.insertAdjacentHTML('beforeend', `<div class="success-msg">تم اختيار: ${selDoctor.name}</div>`);
+                await loadDocSlots(selDoctor.id);
+            };
+        });
+    } catch(e) { res.innerHTML = `<div class="error-msg">${e.message}</div>`; }
+});
+
+async function loadDocSlots(docId) {
+    const res = document.getElementById('bookingSlotsResult');
+    try {
+        const data = await apiCall(`/slots/${docId}`);
+        let html = `<div class="card" style="margin-top:16px;padding:20px"><h3 style="margin-bottom:12px">المواعيد المتاحة</h3><div class="slot-chips">`;
+        data.available_slots.forEach(s => {
+            html += `<button class="slot-chip" data-id="${s.id}" data-date="${s.date}" data-time="${s.time}">📅 ${s.date} ⏰ ${s.time}</button>`;
+        });
+        html += `</div><div style="margin-top:14px"><button class="btn btn-accent" id="confirmDocBtn">✅ تأكيد الحجز</button></div></div>`;
+        res.innerHTML = html;
+        res.querySelectorAll('.slot-chip').forEach(el => {
+            el.onclick = () => {
+                res.querySelectorAll('.slot-chip').forEach(c => c.classList.remove('selected'));
+                el.classList.add('selected');
+                selDocSlot = { id: parseInt(el.getAttribute('data-id')), date: el.getAttribute('data-date'), time: el.getAttribute('data-time') };
+            };
+        });
+        document.getElementById('confirmDocBtn').onclick = async () => {
+            if (!selDocSlot) { alert('اختر موعداً أولاً'); return; }
+            try {
+                const r = await apiCall('/booking/confirm', 'POST', {
+                    national_id: document.getElementById('bookingNationalId').value.trim(),
+                    doctor_id: selDoctor.id, slot_id: selDocSlot.id
+                });
+                document.getElementById('bookingConfirmResult').innerHTML =
+                    `<div class="success-msg">🎉 تم الحجز بنجاح! رقم الحجز: ${r.appointment_id}</div>`;
+            } catch(e) { document.getElementById('bookingConfirmResult').innerHTML = `<div class="error-msg">${e.message}</div>`; }
+        };
+    } catch(e) { res.innerHTML = `<div class="error-msg">${e.message}</div>`; }
+}
+
+// ── SERVICES SECTION ────────────────────────────────────────
+document.getElementById('loadServicesBtn').addEventListener('click', async () => {
+    const nid  = document.getElementById('serviceNationalId').value.trim();
+    const city = document.getElementById('serviceCitySelect').value;
+    const type = document.getElementById('serviceTypeSelect').value;
+    const res  = document.getElementById('servicesResult');
+    if (!nid || !city || !type) { res.innerHTML = '<div class="error-msg">الرجاء ملء جميع الحقول</div>'; return; }
+    res.innerHTML = '<div style="padding:20px;color:var(--text-muted)">جاري البحث...</div>';
+    try {
+        const data = await apiCall(`/services/available?city=${encodeURIComponent(city)}&national_id=${encodeURIComponent(nid)}&service_type=${type}`);
+        if (!data.available_branches?.length) { res.innerHTML = '<div class="error-msg">لا توجد خدمات متاحة في هذه المدينة</div>'; return; }
+        let html = '';
+        data.available_branches.forEach(b => {
+            (b.services || []).forEach(s => {
+                html += `<div class="card">
+                    <h3>${escHtml(s.name)}</h3>
+                    <p class="price">${s.base_price} جنيه</p>
+                    <p>📍 ${escHtml(b.branch_name)}</p>
+                    <div style="margin-top:10px">
+                        <button class="btn btn-sm btn-accent select-svc"
+                            data-sid="${s.service_id}" data-sname="${escHtml(s.name)}"
+                            data-bid="${b.branch_id}" data-bname="${escHtml(b.branch_name)}">اختيار</button>
+                    </div>
+                </div>`;
+            });
+        });
+        res.innerHTML = html;
+        res.querySelectorAll('.select-svc').forEach(btn => {
+            btn.onclick = () => {
+                selectedService = { id: parseInt(btn.getAttribute('data-sid')), name: btn.getAttribute('data-sname') };
+                selectedBranch  = { id: parseInt(btn.getAttribute('data-bid')), name: btn.getAttribute('data-bname') };
+                const det = document.getElementById('serviceDetails');
+                det.style.display = 'block';
+                det.scrollIntoView({ behavior: 'smooth' });
+                if (fpInstance) fpInstance.destroy();
+                fpInstance = flatpickr(document.getElementById('serviceDate'), {
+                    locale: 'ar', dateFormat: 'Y-m-d', minDate: 'today', maxDate: new Date().fp_incr(30),
+                    onChange: (_, ds) => { if (ds) loadTimeSlotsUI(ds); }
+                });
+            };
+        });
+    } catch(e) { res.innerHTML = `<div class="error-msg">${e.message}</div>`; }
+});
+
+function loadTimeSlotsUI(date) {
+    const grp = document.getElementById('timeSlotGroup');
+    const sel = document.getElementById('timeSlotSelect');
+    grp.style.display = 'block';
+    const times = ['08:00:00','09:00:00','10:00:00','11:00:00','12:00:00','13:00:00','14:00:00','15:00:00','16:00:00','17:00:00'];
+    sel.innerHTML = '<option value="">اختر الوقت</option>';
+    times.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t.slice(0,5); sel.appendChild(o); });
+}
+
+document.getElementById('confirmServiceBtn').addEventListener('click', async () => {
+    const nid   = document.getElementById('serviceNationalId').value.trim();
+    const date  = document.getElementById('serviceDate').value;
+    const time  = document.getElementById('timeSlotSelect').value;
+    const apptId = document.getElementById('serviceAppointmentId').value.trim();
+    const res   = document.getElementById('serviceRequestResult');
+    if (!date || !time) { res.innerHTML = '<div class="error-msg">اختر التاريخ والوقت</div>'; return; }
+    res.innerHTML = '<div style="padding:10px;color:var(--text-muted)">جاري الحجز...</div>';
+    try {
+        const chk = await apiCall('/services/check-availability', 'POST', {
+            service_id: selectedService.id, branch_id: selectedBranch.id, requested_date: date, requested_time: time
+        });
+        if (!chk.available) { res.innerHTML = `<div class="error-msg">${chk.message || 'لا يوجد موعد في هذا الوقت'}</div>`; return; }
+        const r = await apiCall('/services/request', 'POST', {
+            national_id: nid, service_id: selectedService.id, branch_id: selectedBranch.id,
+            slot_id: chk.slot_id, appointment_id: apptId ? parseInt(apptId) : null
+        });
+        res.innerHTML = `<div class="success-msg">🎉 تم الحجز! رقم الطلب: ${r.request_id}</div>`;
+        document.getElementById('serviceDetails').style.display = 'none';
+        document.getElementById('servicesResult').innerHTML = '';
+        selectedService = selectedBranch = null;
+    } catch(e) { res.innerHTML = `<div class="error-msg">${e.message}</div>`; }
+});
+
+// ── APPOINTMENTS SECTION ────────────────────────────────────
+document.getElementById('loadAppointmentsBtn').addEventListener('click', async () => {
+    const nid = document.getElementById('appointmentNationalId').value.trim();
+    const lst = document.getElementById('appointmentsList');
+    if (!nid) { lst.innerHTML = '<div class="error-msg">أدخل الرقم القومي</div>'; return; }
+    try {
+        const data = await apiCall(`/appointments/customer/${nid}`);
+        if (!data.appointments?.length) { lst.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>لا توجد مواعيد</p></div>'; return; }
+        lst.innerHTML = data.appointments.map(item => {
+            const isDoc = item.type === 'appointment';
+            const statusClass = item.status === 'confirmed' ? 'confirmed' : item.status === 'cancelled' ? 'cancelled' : 'pending';
+            return `<div class="appt-card card">
+                <div class="appt-icon ${isDoc ? 'doc' : 'lab'}">${isDoc ? '👨‍⚕️' : '🔬'}</div>
+                <div class="appt-info">
+                    <h4>${isDoc ? item.doctor_name : item.service_name}</h4>
+                    <p>${isDoc ? '' : '📍 ' + item.branch_name + ' · '}📅 ${item.appointment_date} ${isDoc ? '⏰ ' + item.appointment_time : ''}</p>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+                    <span class="status-badge ${statusClass}">${item.status}</span>
+                    ${item.status !== 'completed' && isDoc ? `<button class="btn btn-sm" style="background:#fee2e2;color:#991b1b" onclick="cancelAppt(${item.id})">إلغاء</button>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) { document.getElementById('appointmentsList').innerHTML = `<div class="error-msg">${e.message}</div>`; }
+});
+
+window.cancelAppt = async function(id) {
+    if (!confirm('هل أنت متأكد من إلغاء الحجز؟')) return;
+    try {
+        await fetch(`${API_BASE}/appointments/${id}`, { method: 'DELETE' });
+        alert('تم الإلغاء بنجاح');
+        document.getElementById('loadAppointmentsBtn').click();
+    } catch { alert('فشل الإلغاء'); }
+};
+</script>
 </body>
 </html>
