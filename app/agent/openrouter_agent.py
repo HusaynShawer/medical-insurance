@@ -1,6 +1,11 @@
 """
 openrouter_agent.py — Primary agent using OpenRouter (OpenAI-compatible API).
 Uses google/gemini-2.5-flash via OpenRouter.
+
+FIXES APPLIED:
+  1. tool_calls serialized with .model_dump() — prevents history corruption
+  2. Explicit ConversationState injected into every system prompt
+  3. State updated after every tool call — model never needs to re-ask
 """
 
 import os
@@ -19,6 +24,11 @@ from app.agent.shared import (
     normalize_args,
 )
 from app.agent.functions import TOOL_EXECUTORS
+from app.agent.state_manager import (
+    ConversationState,
+    extract_state_from_tool_result,
+    update_state_from_message,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +70,11 @@ def _serialize_history(history: list) -> list:
     return [_serialize_message(m) for m in history]
 
 
+def _build_system_prompt(state: ConversationState) -> str:
+    """Inject current state block into system prompt every turn."""
+    return SYSTEM_PROMPT + state.to_prompt_block()
+
+
 async def _execute_tool(fn_name: str, fn_args: dict, session: AsyncSession) -> Any:
     fn_args = normalize_args(fn_args)
     executor = TOOL_EXECUTORS.get(fn_name)
@@ -78,11 +93,23 @@ async def run_agent(
     message: str,
     history: list,
     session: AsyncSession,
-) -> Tuple[str, list, Optional[Any]]:
+    state: Optional[ConversationState] = None,
+) -> Tuple[str, list, Optional[Any], ConversationState]:
+    """
+    Returns: (reply_text, updated_history, last_tool_result, updated_state)
+    """
+    if state is None:
+        state = ConversationState()
+
     logger.info(f"[OpenRouter] message: {message[:120]!r}")
+    logger.info(f"[OpenRouter] state: {state.to_dict()}")
+
+    # Extract obvious info from the new message before sending
+    state = update_state_from_message(state, message)
+
     try:
         messages = (
-            [{"role": "system", "content": SYSTEM_PROMPT}]
+            [{"role": "system", "content": _build_system_prompt(state)}]
             + _serialize_history(history)
             + [{"role": "user", "content": message}]
         )
@@ -100,10 +127,12 @@ async def run_agent(
 
         while _has_tool_calls(response):
             assistant_msg = response.choices[0].message
+
+            # FIX #1: serialize tool_calls to plain dicts — prevents history corruption
             messages.append({
                 "role":       "assistant",
                 "content":    assistant_msg.content,
-                "tool_calls": assistant_msg.tool_calls,
+                "tool_calls": [tc.model_dump() for tc in assistant_msg.tool_calls],
             })
 
             tool_responses = []
@@ -113,8 +142,13 @@ async def run_agent(
                 logger.info(f"[OpenRouter] → {fn_name}({fn_args})")
                 result = await _execute_tool(fn_name, fn_args, session)
                 logger.info(f"[OpenRouter] ← {fn_name}: {list(result.keys()) if isinstance(result, dict) else type(result)}")
+
+                # FIX #2: update state after every tool call
+                state = extract_state_from_tool_result(state, fn_name, fn_args, result)
+
                 if fn_name in CARD_TOOLS:
                     last_tool_result = result
+
                 tool_responses.append({
                     "role":         "tool",
                     "tool_call_id": tc.id,
@@ -122,6 +156,9 @@ async def run_agent(
                 })
 
             messages.extend(tool_responses)
+
+            # Rebuild system prompt with updated state before next LLM call
+            messages[0]["content"] = _build_system_prompt(state)
 
             response = await client.chat.completions.create(
                 model=MODEL_NAME,
@@ -133,9 +170,9 @@ async def run_agent(
             )
 
         reply = response.choices[0].message.content or ""
-        updated_history = messages[1:]
-        return reply, updated_history, last_tool_result
+        updated_history = messages[1:]  # strip system message
+        return reply, updated_history, last_tool_result, state
 
     except Exception as e:
         logger.error(f"[OpenRouter] Unexpected error: {e}", exc_info=True)
-        return "عذراً، حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.", history, None
+        return "عذراً، حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.", history, None, state

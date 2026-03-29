@@ -1,12 +1,10 @@
 """
 claude_agent.py — Fallback agent using Anthropic Claude (claude-haiku-4-5).
 
-Same features as openrouter_agent:
-- Anti-hallucination system prompt (from shared.py)
-- Date / time / city normalization
-- Per-tool error isolation
-- Structured data returned for frontend card rendering
-- Returns (reply, history, last_tool_result) like all agents
+FIXES APPLIED:
+  1. Import TOOL_EXECUTORS from functions (not shared)
+  2. Explicit ConversationState injected into every system prompt
+  3. State updated after every tool call
 """
 
 import os
@@ -24,7 +22,12 @@ from app.agent.shared import (
     CustomJSONEncoder,
     normalize_args,
 )
-from app.agent.shared import TOOL_EXECUTORS
+from app.agent.functions import TOOL_EXECUTORS  # FIX: was importing from shared
+from app.agent.state_manager import (
+    ConversationState,
+    extract_state_from_tool_result,
+    update_state_from_message,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +38,6 @@ MAX_TOKENS = 1024
 
 CARD_TOOLS = {"search_doctors", "get_slots", "get_available_services"}
 
-# Anthropic format: input_schema instead of parameters
 CLAUDE_TOOLS = [
     {
         "name":         t["name"],
@@ -44,6 +46,10 @@ CLAUDE_TOOLS = [
     }
     for t in TOOLS_SCHEMA
 ]
+
+
+def _build_system_prompt(state: ConversationState) -> str:
+    return SYSTEM_PROMPT + state.to_prompt_block()
 
 
 async def _execute_tool(fn_name: str, fn_args: dict, session: AsyncSession) -> Any:
@@ -64,8 +70,14 @@ async def run_claude_agent(
     message: str,
     history: list,
     session: AsyncSession,
-) -> Tuple[str, list, Optional[Any]]:
+    state: Optional[ConversationState] = None,
+) -> Tuple[str, list, Optional[Any], ConversationState]:
+    if state is None:
+        state = ConversationState()
+
     logger.info(f"[Claude] message: {message[:120]!r}")
+    state = update_state_from_message(state, message)
+
     try:
         history = history + [{"role": "user", "content": message}]
         last_tool_result: Optional[Any] = None
@@ -74,7 +86,7 @@ async def run_claude_agent(
             response = await client.messages.create(
                 model=MODEL_NAME,
                 max_tokens=MAX_TOKENS,
-                system=SYSTEM_PROMPT,
+                system=_build_system_prompt(state),
                 tools=CLAUDE_TOOLS,
                 messages=history,
             )
@@ -85,7 +97,7 @@ async def run_claude_agent(
                 reply = next(
                     (b.text for b in response.content if hasattr(b, "text")), ""
                 )
-                return reply, history, last_tool_result
+                return reply, history, last_tool_result, state
 
             tool_results = []
             for block in response.content:
@@ -96,8 +108,12 @@ async def run_claude_agent(
                 logger.info(f"[Claude] → {fn_name}({fn_args})")
                 result = await _execute_tool(fn_name, fn_args, session)
                 logger.info(f"[Claude] ← {fn_name}: {list(result.keys()) if isinstance(result, dict) else type(result)}")
+
+                state = extract_state_from_tool_result(state, fn_name, fn_args, result)
+
                 if fn_name in CARD_TOOLS:
                     last_tool_result = result
+
                 tool_results.append({
                     "type":        "tool_result",
                     "tool_use_id": block.id,
@@ -108,4 +124,4 @@ async def run_claude_agent(
 
     except Exception as e:
         logger.error(f"[Claude] Unexpected error: {e}", exc_info=True)
-        return "عذراً، حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.", history, None
+        return "عذراً، حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.", history, None, state

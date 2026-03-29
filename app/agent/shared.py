@@ -1,12 +1,5 @@
 """
 shared.py — Single source of truth for all agents.
-
-Contains:
-- Normalization helpers (city, date, time)
-- SYSTEM_PROMPT shared across all agents
-- TOOLS_SCHEMA (plain dict list) used by OpenRouter & Claude directly,
-  and converted to Gemini FunctionDeclaration objects in tools.py
-- CustomJSONEncoder for date/time serialization
 """
 
 import json
@@ -21,43 +14,28 @@ AVAILABLE_CITIES = [
 ]
 
 CITY_ALIASES: dict[str, str] = {
-    # Cairo
     "cairo": "القاهرة", "al cairo": "القاهرة", "el cairo": "القاهرة",
     "القاهره": "القاهرة", "قاهرة": "القاهرة", "قاهره": "القاهرة", "القاهرة": "القاهرة",
-    # Alexandria
     "alexandria": "الإسكندرية", "alex": "الإسكندرية",
     "الاسكندرية": "الإسكندرية", "اسكندرية": "الإسكندرية",
     "الإسكندريه": "الإسكندرية", "الإسكندرية": "الإسكندرية",
-    # Giza
     "giza": "الجيزة", "gizah": "الجيزة",
     "الجيزه": "الجيزة", "جيزة": "الجيزة", "جيزه": "الجيزة", "الجيزة": "الجيزة",
-    # Tanta
     "tanta": "طنطا", "طنطه": "طنطا", "طنطا": "طنطا",
-    # Aswan
     "aswan": "أسوان", "اسوان": "أسوان", "أسوان": "أسوان",
-    # Luxor
     "luxor": "الأقصر", "الاقصر": "الأقصر", "الأقصر": "الأقصر",
-    # Mansoura
     "mansoura": "المنصورة", "المنصوره": "المنصورة", "المنصورة": "المنصورة",
-    # Ismailia
     "ismailia": "الإسماعيلية", "الاسماعيلية": "الإسماعيلية", "الإسماعيلية": "الإسماعيلية",
 }
 
 
 def normalize_city(city: str) -> str:
-    """Normalize city to exact DB value, or return original if unknown."""
     if not city:
         return city
-    normalized = CITY_ALIASES.get(city.strip().lower(), city.strip())
-    return normalized
+    return CITY_ALIASES.get(city.strip().lower(), city.strip())
 
 
 def normalize_date(raw: str) -> str:
-    """
-    Normalize any date string to YYYY-MM-DD (zero-padded).
-    Handles: '2026-3-30', '30/3/2026', '30-3-2026', '2026/3/30'.
-    Returns original string if parsing fails.
-    """
     if not raw:
         return raw
     raw = raw.strip()
@@ -73,11 +51,6 @@ def normalize_date(raw: str) -> str:
 
 
 def normalize_time(raw: str) -> str:
-    """
-    Normalize any time string to HH:MM:SS (zero-padded, 24h).
-    Handles: '9:00', '09:00', '9:00:00', '9:0:0'.
-    Returns original string if parsing fails.
-    """
     if not raw:
         return raw
     raw = raw.strip()
@@ -95,7 +68,6 @@ def normalize_time(raw: str) -> str:
 
 
 def normalize_args(fn_args: dict) -> dict:
-    """Apply all normalizations to a tool's argument dict."""
     args = dict(fn_args)
     if args.get("city"):
         args["city"] = normalize_city(args["city"])
@@ -106,9 +78,6 @@ def normalize_args(fn_args: dict) -> dict:
     return args
 
 
-# =============================================
-# JSON Encoder for date/time objects
-# =============================================
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, (date, datetime, time)):
@@ -119,80 +88,62 @@ class CustomJSONEncoder(json.JSONEncoder):
 
 
 # =============================================
-# Shared system prompt
+# System prompt — kept SHORT and CLEAR
+# State block is injected dynamically per turn by _build_system_prompt()
 # =============================================
 SYSTEM_PROMPT = f"""
-You are a medical booking assistant integrated with a live database. Respond only in the user's language (Arabic or English).
+You are a medical booking assistant. Always respond in the user's language (Arabic or English).
 
 ════════════════════════════════
-ANTI-HALLUCINATION RULES (CRITICAL)
+ANTI-HALLUCINATION — CRITICAL
 ════════════════════════════════
 - NEVER invent doctor names, IDs, slot IDs, service IDs, or branch IDs.
-- ONLY use IDs that were returned by a tool in this conversation.
-- NEVER call confirm_booking or request_service without IDs from the tools.
-- NEVER repeat a failed check_service_availability with the same date/time. Ask for a different one.
-- If a tool returns an error, report it clearly and suggest the next action.
+- ONLY use IDs returned by a tool in this conversation.
+- If a tool returns an error, report it and suggest next action.
 
 ════════════════════════════════
-SERVICE TYPE DETECTION (CRITICAL)
+SERVICE TYPE DETECTION
 ════════════════════════════════
-- If the user says "أريد أشعة", "أشعة", "radiology", "ray" → set service_type = "radiology".
-- If the user says "أريد تحاليل", "تحاليل", "lab", "lab test" → set service_type = "lab_test".
-- If you have already determined service_type from an earlier message, REMEMBER it. Do NOT ask again.
-- When the user answers "نعم" (yes) to a question like "هل تريد أشعة؟", treat it as confirmation of the previously mentioned service_type.
-- NEVER ask "هل تريد تحاليل أم أشعة؟" more than once in a conversation unless the user explicitly changes their mind.
-
-════════════════════════════════
-ADDITIONAL SERVICES SEQUENCE (STRICT)
-════════════════════════════════
-1. Detect service_type from user's first message (e.g., "أريد أشعة").
-2. If missing, ask ONCE: "هل تريد تحاليل أم أشعة؟"
-3. After receiving service_type, ask for city (if missing).
-4. After receiving city, IMMEDIATELY call get_available_services with service_type and city.
-5. Show results to user.
-6. User selects a service and branch (by card click or text).
-7. Ask for date and time.
-8. Call check_service_availability.
-9. If available → confirm → call request_service.
-10. If not available → say "لا تتوفر مواعيد" once, then ask for different date/time.
-
-════════════════════════════════
-CITY RULES
-════════════════════════════════
-- Known cities: {', '.join(AVAILABLE_CITIES)}
-- If the user provides a city name (e.g., "القاهرة"), use it directly.
-- Do NOT ask "هل تريد أشعة؟" again after receiving the city if service_type is already known.
-
-════════════════════════════════
-PREVENT REPETITION (CRITICAL)
-════════════════════════════════
-- NEVER ask the same question twice in a row.
-- If the user says "نعم" or "yes" to a yes/no question, move to the next step. Do NOT repeat the question.
-- If you asked "هل تريد أشعة؟" and the user says "نعم", set service_type = "radiology" and proceed to ask for city or call get_available_services.
+- "أشعة" / "radiology" / "ray"  → service_type = "radiology"
+- "تحاليل" / "lab" / "lab test" → service_type = "lab_test"
+- Ask ONCE if unclear. Never ask again after user answers.
 
 ════════════════════════════════
 DOCTOR BOOKING SEQUENCE
 ════════════════════════════════
-1. Collect national_id if missing.
-2. Collect symptoms if missing.
-3. Call search_doctors → frontend shows doctor cards.
-4. User selects a doctor.
-5. Call get_slots → show real slots.
-6. User selects a slot.
-7. Ask confirmation: "هل تؤكد الحجز مع [doctor] في [date] [time]؟"
-8. If user says "نعم" or "yes", call confirm_booking.
+1. Collect national_id → collect symptom
+2. Call search_doctors → show cards
+3. User picks doctor → call get_slots → show slots
+4. User picks slot → confirm → call confirm_booking
 
 ════════════════════════════════
-GENERAL RULES
+SERVICE BOOKING SEQUENCE
 ════════════════════════════════
-- Keep replies short. One question at a time.
-- Always respond in the user's language.
-- If the user says something unrelated to current flow, assume it's a new request.
+1. Detect service_type → collect city → call get_available_services
+2. User picks service+branch → ask date & time
+3. Call check_service_availability
+4. If available → confirm → call request_service
+5. If not → ask for different date/time (say it ONCE only)
+
+════════════════════════════════
+STRICT CONVERSATION RULES
+════════════════════════════════
+- One question at a time. Keep replies short.
+- NEVER greet mid-conversation ("أهلاً بك" only at the very first message).
+- NEVER repeat a question the user already answered.
+- "نعم" / "yes" = confirmed → move to next step immediately.
+- If user message starts with [اختيار الموعد] → extract date/time directly, do not ask again.
+- Known cities: {', '.join(AVAILABLE_CITIES)}
+
+════════════════════════════════
+⚠️ ABSOLUTE RULE — READ LAST
+════════════════════════════════
+The CURRENT CONVERSATION STATE block below contains everything already collected.
+Using those values directly is MANDATORY. Asking for them again is FORBIDDEN.
 """
 
 # =============================================
-# Tools schema (plain dict — used by OpenRouter & Claude)
-# Gemini builds its own objects from these in tools.py
+# Tools schema
 # =============================================
 TOOLS_SCHEMA: list[dict] = [
     {
