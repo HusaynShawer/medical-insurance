@@ -48,7 +48,8 @@ def normalize_city(city: str) -> str:
     """Normalize city to exact DB value, or return original if unknown."""
     if not city:
         return city
-    return CITY_ALIASES.get(city.strip().lower(), city.strip())
+    normalized = CITY_ALIASES.get(city.strip().lower(), city.strip())
+    return normalized
 
 
 def normalize_date(raw: str) -> str:
@@ -133,40 +134,41 @@ ANTI-HALLUCINATION RULES (CRITICAL)
 - If a tool returns an error, report it clearly and suggest the next action.
 
 ════════════════════════════════
-DATE & TIME RULES (CRITICAL)
+SERVICE TYPE DETECTION (CRITICAL)
 ════════════════════════════════
-- The user types dates and times MANUALLY — there is no working calendar widget.
-- Accept any date format: "2026-3-30", "30/3/2026", "30-3-2026". The system normalizes automatically.
-- Accept any time format: "9:00", "09:00", "9:00:00". The system normalizes automatically.
-- Do NOT ask the user to reformat date or time input.
-
-- NEVER call check_service_availability unless you have BOTH date AND time confirmed.
-- If the user sends ONLY a time without a date → ask for the date first. Do NOT call any tool.
-- If the user sends ONLY a date without a time → ask for the time. Do NOT call any tool.
-- When user provides both date and time in the same message → call check_service_availability immediately.
-
-- When check_service_availability returns not available:
-  • Do NOT retry with the same date/time.
-  • Say exactly: "لا تتوفر مواعيد في هذا الوقت. يرجى إدخال تاريخ أو وقت آخر."
-  • Wait for the user to type a new date/time before calling the tool again.
+- If the user says "أريد أشعة", "أشعة", "radiology", "ray" → set service_type = "radiology".
+- If the user says "أريد تحاليل", "تحاليل", "lab", "lab test" → set service_type = "lab_test".
+- If you have already determined service_type from an earlier message, REMEMBER it. Do NOT ask again.
+- When the user answers "نعم" (yes) to a question like "هل تريد أشعة؟", treat it as confirmation of the previously mentioned service_type.
+- NEVER ask "هل تريد تحاليل أم أشعة؟" more than once in a conversation unless the user explicitly changes their mind.
 
 ════════════════════════════════
-NEW REQUEST DETECTION (CRITICAL)
+ADDITIONAL SERVICES SEQUENCE (STRICT)
 ════════════════════════════════
-- If the user sends a completely new request after a failed flow (e.g. "أريد تحاليل دم", "أريد حجز دكتور", "أريد أشعة"):
-  • This is a FRESH start. Forget any previous failed state.
-  • Do NOT respond with "لا تتوفر مواعيد" to a new service/booking request.
-  • Start the correct sequence from step 1.
-- The phrase "لا تتوفر مواعيد" ONLY applies when check_service_availability returned not available. Never say it for any other reason.
+1. Detect service_type from user's first message (e.g., "أريد أشعة").
+2. If missing, ask ONCE: "هل تريد تحاليل أم أشعة؟"
+3. After receiving service_type, ask for city (if missing).
+4. After receiving city, IMMEDIATELY call get_available_services with service_type and city.
+5. Show results to user.
+6. User selects a service and branch (by card click or text).
+7. Ask for date and time.
+8. Call check_service_availability.
+9. If available → confirm → call request_service.
+10. If not available → say "لا تتوفر مواعيد" once, then ask for different date/time.
 
 ════════════════════════════════
 CITY RULES
 ════════════════════════════════
 - Known cities: {', '.join(AVAILABLE_CITIES)}
-- The system normalizes city names automatically (English or misspelled Arabic).
-- If get_available_services returns empty results, respond:
-  "لم أجد خدمات في هذه المدينة. المدن المتاحة: {', '.join(AVAILABLE_CITIES)}"
-  Then ask the user to choose one.
+- If the user provides a city name (e.g., "القاهرة"), use it directly.
+- Do NOT ask "هل تريد أشعة؟" again after receiving the city if service_type is already known.
+
+════════════════════════════════
+PREVENT REPETITION (CRITICAL)
+════════════════════════════════
+- NEVER ask the same question twice in a row.
+- If the user says "نعم" or "yes" to a yes/no question, move to the next step. Do NOT repeat the question.
+- If you asked "هل تريد أشعة؟" and the user says "نعم", set service_type = "radiology" and proceed to ask for city or call get_available_services.
 
 ════════════════════════════════
 DOCTOR BOOKING SEQUENCE
@@ -174,32 +176,18 @@ DOCTOR BOOKING SEQUENCE
 1. Collect national_id if missing.
 2. Collect symptoms if missing.
 3. Call search_doctors → frontend shows doctor cards.
-4. User selects a doctor (by card click or text).
-5. Call get_slots → frontend shows real slot chips from DB.
+4. User selects a doctor.
+5. Call get_slots → show real slots.
 6. User selects a slot.
-7. Confirm: "هل تؤكد الحجز مع [doctor] في [date] [time]؟"
-8. Only after explicit "نعم" or "yes": call confirm_booking.
-
-════════════════════════════════
-ADDITIONAL SERVICES SEQUENCE
-════════════════════════════════
-1. Ask if user wants lab tests or radiology.
-2. Ask for city if missing. If user says "anywhere" or "any city", pick القاهرة as default.
-3. Call get_available_services → frontend shows service cards.
-4. User selects a service and branch.
-5. Ask user: "يرجى إدخال التاريخ والوقت المطلوبين (مثال: 2026-03-30 09:00)"
-6. Wait for user to type BOTH date and time in one message or two separate messages.
-7. Once you have BOTH date and time → call check_service_availability.
-8. If available → confirm with user → call request_service.
-9. If NOT available → ask for a DIFFERENT date or time. Do NOT retry same values.
+7. Ask confirmation: "هل تؤكد الحجز مع [doctor] في [date] [time]؟"
+8. If user says "نعم" or "yes", call confirm_booking.
 
 ════════════════════════════════
 GENERAL RULES
 ════════════════════════════════
-- Keep replies short. The frontend renders cards; you only need to guide the user.
-- One question at a time.
+- Keep replies short. One question at a time.
 - Always respond in the user's language.
-- NEVER say "لا تتوفر مواعيد" unless check_service_availability was just called and returned not available.
+- If the user says something unrelated to current flow, assume it's a new request.
 """
 
 # =============================================
@@ -240,8 +228,7 @@ TOOLS_SCHEMA: list[dict] = [
         "name": "confirm_booking",
         "description": (
             "Confirm a doctor appointment. "
-            "ONLY call after: user chose doctor, user chose slot from get_slots, user confirmed explicitly. "
-            "NEVER invent doctor_id or slot_id."
+            "ONLY call after: user chose doctor, user chose slot from get_slots, user confirmed explicitly."
         ),
         "parameters": {
             "type": "object",
@@ -268,7 +255,7 @@ TOOLS_SCHEMA: list[dict] = [
         "name": "get_available_services",
         "description": (
             "Search for available lab tests or radiology services in a city. "
-            "Use exact Arabic city name. If empty results, ask user to choose another city."
+            "Use exact Arabic city name. service_type is REQUIRED: 'lab_test' or 'radiology'."
         ),
         "parameters": {
             "type": "object",
@@ -276,9 +263,9 @@ TOOLS_SCHEMA: list[dict] = [
                 "national_id":   {"type": "string", "description": "National ID"},
                 "city":          {"type": "string", "description": "Arabic city name e.g. القاهرة"},
                 "symptom":       {"type": "string", "description": "Symptoms (optional)"},
-                "service_type":  {"type": "string", "description": "lab_test or radiology"},
+                "service_type":  {"type": "string", "description": "REQUIRED: 'lab_test' or 'radiology'"},
             },
-            "required": ["national_id", "city"],
+            "required": ["national_id", "city", "service_type"],
         },
     },
     {
@@ -286,7 +273,7 @@ TOOLS_SCHEMA: list[dict] = [
         "description": (
             "Check if a service slot is available. "
             "Use service_id and branch_id from get_available_services. "
-            "If result is not available, do NOT retry with same date/time — ask user for a different one."
+            "If not available, say so once and ask for a different date/time."
         ),
         "parameters": {
             "type": "object",

@@ -202,8 +202,24 @@ async def get_available_services(
     service_type: Optional[str] = None,
     session: AsyncSession = None,
 ) -> dict:
-    """Search for available services based on location and service type"""
+    """
+    Search for available services based on location and service type.
+    FIX: service_type is now required. If missing, returns error to prevent hallucination.
+    """
     logger.info(f"Getting available services - city: {city}, national_id: {national_id}, service_type: {service_type}")
+
+    # ── NEW CHECK: service_type must be provided ─────────────────
+    if not service_type:
+        error_msg = "يرجى تحديد نوع الخدمة: lab_test أو radiology (تحاليل أو أشعة)"
+        logger.warning(f"get_available_services called without service_type - returning error")
+        return {"error": error_msg, "available_branches": []}
+    
+    # Validate service_type value
+    if service_type not in ("lab_test", "radiology"):
+        error_msg = f"نوع الخدمة غير صحيح: {service_type}. يجب أن يكون 'lab_test' أو 'radiology'"
+        logger.warning(error_msg)
+        return {"error": error_msg, "available_branches": []}
+
     try:
         customer = await validate_customer(national_id, session)
         policy = await validate_policy(customer.id, session)

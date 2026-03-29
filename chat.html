@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
     <style>
+        /* نفس الأنماط السابقة لم تتغير، احتفظ بها كما هي */
         :root {
             --primary: #1a6b8a;
             --primary-light: #2090b8;
@@ -39,7 +40,6 @@
             min-height: 100vh;
         }
 
-        /* ── NAVBAR ── */
         .navbar {
             background: var(--primary-dark);
             padding: 0 24px;
@@ -85,7 +85,6 @@
         .nav-links button:hover { color: white; background: rgba(255,255,255,0.1); }
         .nav-links button.active { color: white; background: var(--primary-light); }
 
-        /* ── LAYOUT ── */
         .container {
             max-width: 900px;
             margin: 28px auto;
@@ -99,7 +98,6 @@
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ── SECTION HEADER ── */
         .section-header {
             display: flex;
             align-items: center;
@@ -121,7 +119,6 @@
             border: 1px solid var(--accent);
         }
 
-        /* ── CARD ── */
         .card {
             background: var(--surface);
             border-radius: var(--radius);
@@ -164,7 +161,6 @@
             margin-top: 6px;
         }
 
-        /* ── BUTTONS ── */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -197,7 +193,6 @@
         }
         .btn-ghost:hover { background: var(--border); }
 
-        /* ── FORM ── */
         .form-group { margin-bottom: 16px; }
         label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.88rem; color: var(--primary-dark); }
         select, input, textarea {
@@ -217,7 +212,6 @@
             box-shadow: 0 0 0 3px rgba(32,144,184,0.12);
         }
 
-        /* ── CHAT ── */
         .chat-wrap {
             background: var(--surface);
             border-radius: var(--radius);
@@ -284,7 +278,6 @@
             border-bottom-left-radius: 4px;
         }
 
-        /* inline cards inside chat */
         .chat-cards { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
         .chat-card {
             background: var(--surface2);
@@ -312,7 +305,6 @@
         }
         .chat-card .badge-pill.green { background: var(--accent-light); color: #007a62; }
 
-        /* slot chips */
         .slot-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
         .slot-chip {
             background: var(--surface);
@@ -327,7 +319,6 @@
         }
         .slot-chip:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* city dropdown inside chat */
         .city-picker {
             margin-top: 10px;
             background: var(--surface2);
@@ -350,7 +341,6 @@
         }
         .city-chip:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* calendar inside chat */
         .datetime-picker {
             margin-top: 10px;
             background: var(--surface2);
@@ -377,7 +367,6 @@
         .time-chip:hover { background: var(--primary); color: white; border-color: var(--primary); }
         .time-chip.selected { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* typing indicator */
         .typing-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
         .typing-dots { display: flex; gap: 4px; }
         .typing-dots span {
@@ -393,7 +382,6 @@
             40%          { transform: scale(1);   opacity: 1; }
         }
 
-        /* chat bottom bar */
         .chat-bar {
             padding: 14px 16px;
             background: var(--surface);
@@ -440,7 +428,6 @@
         }
         .quick-pill:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* ── APPOINTMENTS ── */
         .appt-card {
             background: var(--surface);
             border: 1.5px solid var(--border);
@@ -473,7 +460,6 @@
         .status-badge.pending   { background: #fff3cd; color: #856404; }
         .status-badge.cancelled { background: #f8d7da; color: #721c24; }
 
-        /* ── FLATPICKR OVERRIDE ── */
         .flatpickr-calendar {
             font-family: var(--font) !important;
             border-radius: var(--radius) !important;
@@ -485,7 +471,6 @@
             border-color: var(--primary) !important;
         }
 
-        /* ── MISC ── */
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -730,11 +715,9 @@ function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// Detect if agent reply is asking for city
 function wantsCity(text) {
     return /مدين|city|المدن المتاحة|اختر المدينة/i.test(text);
 }
-// Detect if agent reply is asking for date/time
 function wantsDateTime(text) {
     return /تاريخ|وقت|date|time|موعد/i.test(text) && !/لا تتوفر/i.test(text);
 }
@@ -749,7 +732,6 @@ function buildCityPicker() {
     </div>`;
 }
 
-// ── datetime picker state (one active picker at a time) ──
 let _dtState = { date: '', time: '', id: '' };
 
 function buildDateTimePicker() {
@@ -774,7 +756,6 @@ function buildDateTimePicker() {
         <div id="dt_confirm_${id}" style="margin-top:10px"></div>
     </div>`;
 
-    // Init flatpickr AFTER the element is in the DOM
     setTimeout(() => {
         const el = document.getElementById('date_' + id);
         if (!el) return;
@@ -789,7 +770,6 @@ function buildDateTimePicker() {
                 _dtPickerRender(id);
             }
         });
-        // Also handle manual typing
         el.addEventListener('change', () => {
             if (!_dtState.date && el.value) {
                 _dtState.date = el.value;
@@ -816,7 +796,6 @@ function _dtPickerRender(id) {
     });
 }
 
-// Global event delegation for time chips — works inside dynamically injected HTML
 document.addEventListener('click', function(e) {
     const chip = e.target.closest('.time-chip[data-picker]');
     if (!chip) return;
@@ -828,7 +807,6 @@ document.addEventListener('click', function(e) {
     _dtState.time = chip.getAttribute('data-time');
     _dtPickerRender(pickerId);
 });
-
 
 function buildDoctorCards(doctors) {
     if (!doctors || !doctors.length) return '';
@@ -856,25 +834,54 @@ function buildSlotChips(slots) {
     return `<div class="slot-chips">${chips}</div>`;
 }
 
+// ─── تعديل buildServiceCards لترسل المعرفات ─────────────────
 function buildServiceCards(branches) {
     if (!branches || !branches.length) return '';
     const items = branches.flatMap(b =>
-        (b.services || []).map(s => `
-        <div class="chat-card">
-            <div class="info">
-                <h4>${escHtml(s.name)}</h4>
-                <p>${escHtml(b.branch_name || '')}</p>
-                <div class="badge-row">
-                    <span class="badge-pill green">${s.base_price} جنيه</span>
+        (b.services || []).map(s => {
+            const serviceId = s.service_id;
+            const branchId = b.branch_id;
+            const serviceName = s.name;
+            const branchName = b.branch_name;
+            return `
+            <div class="chat-card">
+                <div class="info">
+                    <h4>${escHtml(serviceName)}</h4>
+                    <p>${escHtml(branchName)}</p>
+                    <div class="badge-row">
+                        <span class="badge-pill green">${s.base_price} جنيه</span>
+                    </div>
                 </div>
-            </div>
-            <button class="btn btn-sm btn-accent" onclick="chatSend('أريد خدمة ${escHtml(s.name)} في فرع ${escHtml(b.branch_name)}')">اختيار</button>
-        </div>`)
+                <button class="btn btn-sm btn-accent select-service-btn" 
+                        data-service-id="${serviceId}" 
+                        data-branch-id="${branchId}"
+                        data-service-name="${escHtml(serviceName)}"
+                        data-branch-name="${escHtml(branchName)}">اختيار</button>
+            </div>`;
+        })
     ).join('');
-    return `<div class="chat-cards">${items}</div>`;
+    
+    // نستخدم setTimeout لتأكيد إضافة الأزرار إلى DOM ثم نضيف المستمعات
+    setTimeout(() => {
+        document.querySelectorAll('.select-service-btn').forEach(btn => {
+            btn.removeEventListener('click', handleServiceSelect);
+            btn.addEventListener('click', handleServiceSelect);
+        });
+    }, 0);
+    
+    return `<div class="chat-cards" id="service-cards-container">${items}</div>`;
 }
 
-// sendFromDatePicker removed — handled by _dtPickerRender event listener
+function handleServiceSelect(e) {
+    const btn = e.currentTarget;
+    const serviceId = btn.getAttribute('data-service-id');
+    const branchId = btn.getAttribute('data-branch-id');
+    const serviceName = btn.getAttribute('data-service-name');
+    const branchName = btn.getAttribute('data-branch-name');
+    const msg = `أريد حجز خدمة: ${serviceName} في فرع ${branchName} (service_id: ${serviceId}, branch_id: ${branchId})`;
+    sendChatMessage(msg);
+}
+// ─── نهاية التعديل ─────────────────────────────────────────
 
 function chatSend(text) {
     sendChatMessage(text);
@@ -905,13 +912,11 @@ async function sendChatMessage(msg) {
             if (sd.available_branches) extras += buildServiceCards(sd.available_branches);
         }
 
-        // Smart extras: city picker / datetime picker
         if (!extras && wantsCity(reply))     extras += buildCityPicker();
         if (!extras && wantsDateTime(reply)) extras += buildDateTimePicker();
 
         const row = addBotMsg(reply, extras);
 
-        // Wire city chips
         row.querySelectorAll('.city-chip').forEach(btn => {
             btn.addEventListener('click', () => chatSend(btn.getAttribute('data-city')));
         });
@@ -928,7 +933,7 @@ document.querySelectorAll('.quick-pill').forEach(b => {
     b.addEventListener('click', () => sendChatMessage(b.getAttribute('data-msg')));
 });
 
-// ── DOCTOR BOOKING SECTION ──────────────────────────────────
+// ── DOCTOR BOOKING SECTION (نفسه بدون تغيير) ─────────────────
 let selDoctor = null, selDocSlot = null;
 
 document.getElementById('searchDoctorsBtn').addEventListener('click', async () => {
@@ -991,7 +996,7 @@ async function loadDocSlots(docId) {
     } catch(e) { res.innerHTML = `<div class="error-msg">${e.message}</div>`; }
 }
 
-// ── SERVICES SECTION ────────────────────────────────────────
+// ── SERVICES SECTION (بدون تغيير) ───────────────────────────
 document.getElementById('loadServicesBtn').addEventListener('click', async () => {
     const nid  = document.getElementById('serviceNationalId').value.trim();
     const city = document.getElementById('serviceCitySelect').value;
@@ -1068,7 +1073,7 @@ document.getElementById('confirmServiceBtn').addEventListener('click', async () 
     } catch(e) { res.innerHTML = `<div class="error-msg">${e.message}</div>`; }
 });
 
-// ── APPOINTMENTS SECTION ────────────────────────────────────
+// ── APPOINTMENTS SECTION (بدون تغيير) ───────────────────────
 document.getElementById('loadAppointmentsBtn').addEventListener('click', async () => {
     const nid = document.getElementById('appointmentNationalId').value.trim();
     const lst = document.getElementById('appointmentsList');
